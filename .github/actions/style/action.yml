@@ -28,7 +28,7 @@ runs:
             exit 1
         else
             echo "All files are formatted correctly. Niiiceee"
-            exti 0
+            exit 0
         fi
 
     # Upload errors as an artifact, when failed
