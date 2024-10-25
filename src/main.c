@@ -10,14 +10,14 @@
 #include <cjson/cJSON.h>
 
 
-//SAME FOLDER HEADERS,WiTH 
+//SAME FOLDER HEADERS,WiTH
 
 
 int main(void)
 {
     //create a json obj
     cJSON* root = cJSON_CreateObject();
-   
+
    //add samedate
    cJSON_AddStringToObject(root,"name","dario");
    cJSON_AddNumberToObject(root,"age",25);
@@ -41,5 +41,5 @@ int main(void)
 
 
     return 0;
-    
+
 }

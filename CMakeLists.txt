@@ -13,9 +13,9 @@ include(CTest)
 
 # Flags for compilng
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_C_FLAG_DEBUG "-g3 -Wall -pedantic -Werror -Wextra -Wconversion")
+set(CMAKE_C_FLAG_DEBUG "-g3 -OO -Wall -Wextra -Wpedantc -Werror -Wunused-parameter -Wmissing-prototypes -Wstric-prototipes -fhardened")
 
-# include headers
+# include h-eaders
 include_directories(include)
 
 #Find dependences
@@ -27,3 +27,8 @@ find_package(unity REQUIRED)
 add_executable(${PROJECT_NAME} src/main.c)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE cjson::cjson)
+
+if(RUN_COVERAGE EQUAL 1)
+    message("Run with coverage")
+    #add_subdirectory(test)
+endif()
