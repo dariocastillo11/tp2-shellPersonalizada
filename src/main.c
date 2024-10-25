@@ -26,14 +26,14 @@ int main(void)
    //complex date types
    cJSON* hobbies= cJSON_CreateArray();
 
-   cJSON_addItemToArray(hobbies,cJSON_CreateString("readinf"));
-   cJSON_addItemToArray(hobbies,cJSON_CreateString("traning"));
-   cJSON_AddObjectToObject(root,"hobbies",hobbies);
+   cJSON_AddItemToArray(hobbies,cJSON_CreateString("reading"));
+   cJSON_AddItemToArray(hobbies,cJSON_CreateString("traning"));
+   cJSON_AddItemToObject(root,"hobbies",hobbies);
 
 
    //print obj
    char* json_string = cJSON_Print(root);
-   print("%s\n", json_string);
+   printf("%s\n", json_string);
 
    //cleanup
    cJSON_Delete(root);
@@ -42,7 +42,4 @@ int main(void)
 
     return 0;
     
-}//cmake .. -DCMAKE_TOOLCHAIN_FILE=./build/Release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
-
-//54:13
-//hacer cmake ..
+}

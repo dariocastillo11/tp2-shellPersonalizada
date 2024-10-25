@@ -23,10 +23,6 @@ CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 //Path to a program.
 CMAKE_AR:FILEPATH=/usr/bin/ar
 
-//For backwards compatibility, what version of CMake commands and
-// syntax should this version of CMake try to support.
-CMAKE_BACKWARDS_COMPATIBILITY:STRING=2.4
-
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
 CMAKE_BUILD_TYPE:STRING=Debug
@@ -199,8 +195,8 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 //Path to a program.
 CMAKE_STRIP:FILEPATH=/usr/bin/strip
 
-//No help, variable specified on the command line.
-CMAKE_TOOLCHAIN_FILE:UNINITIALIZED=./build/Release/generators/conan_toolchain.cmake
+//The CMake toolchain file
+CMAKE_TOOLCHAIN_FILE:FILEPATH=/home/dario/Escritorio/tp2/so-i-24-chp2-dariocastillo11/build/Debug/generators/conan_toolchain.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -224,14 +220,8 @@ CTEST_SUBMIT_RETRY_DELAY:STRING=5
 //Maximum time allowed before CTest will kill the test.
 DART_TESTING_TIMEOUT:STRING=1500
 
-//Single output directory for building all executables.
-EXECUTABLE_OUTPUT_PATH:PATH=
-
 //Path to a program.
 GITCOMMAND:FILEPATH=/usr/bin/git
-
-//Single output directory for building all libraries.
-LIBRARY_OUTPUT_PATH:PATH=
 
 //Command to build the project
 MAKECOMMAND:STRING=/usr/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}"
@@ -255,10 +245,10 @@ ShellProject_IS_TOP_LEVEL:STATIC=ON
 ShellProject_SOURCE_DIR:STATIC=/home/dario/Escritorio/tp2/so-i-24-chp2-dariocastillo11
 
 //The directory containing a CMake configuration file for cJSON.
-cJSON_DIR:PATH=/home/dario/Escritorio/tp2/so-i-24-chp2-dariocastillo11/build/build/Release/generators
+cJSON_DIR:PATH=/home/dario/Escritorio/tp2/so-i-24-chp2-dariocastillo11/build/Debug/generators
 
 //The directory containing a CMake configuration file for unity.
-unity_DIR:PATH=unity_DIR-NOTFOUND
+unity_DIR:PATH=/home/dario/Escritorio/tp2/so-i-24-chp2-dariocastillo11/build/Debug/generators
 
 
 ########################
