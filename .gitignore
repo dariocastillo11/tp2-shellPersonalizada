@@ -58,7 +58,6 @@ venv/
 build/
 
 # cmakeuserpresen
-.cmakeuserpresen
-cmakeuserpresen/
+CMakeUserPresets.json
 
 

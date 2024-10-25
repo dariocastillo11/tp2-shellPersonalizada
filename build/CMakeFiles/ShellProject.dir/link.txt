@@ -1,1 +1,0 @@
-/usr/bin/cc -m64 -g -m64 CMakeFiles/ShellProject.dir/src/main.c.o -o ShellProject   -L/home/dario/.conan2/p/b/cjson9e28834bfcace/p/lib  -Wl,-rpath,/home/dario/.conan2/p/b/cjson9e28834bfcace/p/lib /home/dario/.conan2/p/b/cjson9e28834bfcace/p/lib/libcjson.a -lm 
