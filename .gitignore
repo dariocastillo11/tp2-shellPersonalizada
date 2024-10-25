@@ -60,4 +60,6 @@ build/
 # cmakeuserpresen
 CMakeUserPresets.json
 
+# .vscode
+.vscode/
 
