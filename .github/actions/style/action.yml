@@ -7,34 +7,47 @@ runs:
     - name: "Run clang-format"
       shell: bash
       run: |
-        # We only make check, not changes
-        # Use the find command with the variable
+        # Ruta del proyecto
         PROJECT_PATH=$(pwd)
 
-        SOURCE_FILES=$(find $PROJECT_PATH/src -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
-        SOURCE_FILES+=$(find $PROJECT_PATH/include -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
-        # If you have a lib, uncomment the following line
-        # SOURCE_FILES+=$(find $PROJECT_PATH/lib -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
+        # Inicializar la lista de archivos fuente vacía
+        SOURCE_FILES=""
 
-        ERROR_FILE_FLAG=$PROJECT_PATH/clang-format_errors.txt
+        # Verificar existencia de carpetas antes de ejecutar find
+        if [ -d "$PROJECT_PATH/src" ]; then
+          SOURCE_FILES=$(find "$PROJECT_PATH/src" -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
+        fi
+
+        if [ -d "$PROJECT_PATH/include" ]; then
+          SOURCE_FILES="$SOURCE_FILES $(find "$PROJECT_PATH/include" -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")"
+        fi
+
+        # Descomentar para incluir lib si existe
+        # if [ -d "$PROJECT_PATH/lib" ]; then
+        #   SOURCE_FILES="$SOURCE_FILES $(find "$PROJECT_PATH/lib" -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")"
+        # fi
+
+        ERROR_FILE_FLAG="$PROJECT_PATH/clang-format_errors.txt"
 
         echo "Running: clang-format -n $SOURCE_FILES"
 
-        CLANG_COMMAND=$(clang-format -n $SOURCE_FILES 2> ${ERROR_FILE_FLAG})
+        # Ejecutar clang-format y capturar errores
+        clang-format -n $SOURCE_FILES 2> "$ERROR_FILE_FLAG"
 
-        if [ -s $ERROR_FILE_FLAG ]; then
-            echo "Error: There are some files that are not formatted correctly"
-            cat $ERROR_FILE_FLAG
+        # Verificar si hay errores de formato
+        if [ -s "$ERROR_FILE_FLAG" ]; then
+            echo "Error: Algunos archivos no están formateados correctamente"
+            cat "$ERROR_FILE_FLAG"
             exit 1
         else
-            echo "All files are formatted correctly. Niiiceee"
+            echo "Todos los archivos están formateados correctamente."
+            rm -f "$ERROR_FILE_FLAG"
             exit 0
         fi
 
-    # Upload errors as an artifact, when failed
     - uses: actions/upload-artifact@v3
       if: failure()
       with:
-        name: Clang-format errors!!!
+        name: "Clang-format errors"
         path: ./clang-format_errors.txt
         retention-days: 1
