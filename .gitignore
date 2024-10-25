@@ -52,11 +52,9 @@ Mkfile.old
 dkms.conf
 
 # env
-.env
 venv/
 
 # build
-.build
 build/
 
 # cmakeuserpresen
