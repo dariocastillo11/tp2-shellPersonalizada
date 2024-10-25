@@ -58,3 +58,9 @@ venv/
 # build
 .build
 build/
+
+# cmakeuserpresen
+.cmakeuserpresen
+cmakeuserpresen/
+
+
