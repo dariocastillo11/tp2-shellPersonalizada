@@ -13,7 +13,7 @@ include(CTest)
 
 # Flags for compilng
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_C_FLAG_DEBUG "-g3 -OO -Wall -Wextra -Wpedantc -Werror -Wunused-parameter -Wmissing-prototypes -Wstric-prototipes -fhardened")
+set(CMAKE_C_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -Wpedantic -Werror -Wunused-parameter -Wmissing-prototypes -Wstrict-prototypes -fhardened")
 
 # include h-eaders
 include_directories(include)
@@ -24,9 +24,9 @@ find_package(unity REQUIRED)
 
 # add_executable -->.exe/bnary
 #add_library ---> .a/.so/.dll STATC SHARED
-add_executable(${PROJECT_NAME} src/main.c)
+add_executable(ShellProject src/main.c src/tools.c)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE cjson::cjson)
+target_link_libraries(ShellProject PRIVATE cjson::cjson unity::unity)
 
 if(RUN_COVERAGE EQUAL 1)
     message("Run with coverage")
