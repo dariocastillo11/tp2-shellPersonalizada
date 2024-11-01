@@ -1,11 +1,26 @@
-//
-// Created by DARIO on 27/10/24.
-//
+/**
+ * @author DARIO ALBERTO CASTILLO
+ * @file util.c
+ * @brief En
+ */
 #include "tools.h"
 #include "util.h"
 struct termios original_mode;
 ProcessControl process = {0};
 
+
+
+/** @brief launchProg
+ Ejecuta un programa externo con los argumentos dados
+ args[]:  Array de cadenas que representa el comando y sus argumentos.
+ background: Indica si el proceso debe ejecutarse en segundo plano.
+ Funcionamiento:
+ Crea un proceso hijo usando fork().
+ Si background es 1, el proceso se ejecuta en segundo plano.
+ En caso contrario, el proceso espera a que el hijo termine.
+ Utiliza execvp() para ejecutar el programa externo en el hijo.
+ Muestra un mensaje de error si el comando no se puede ejecutar
+*/
 void launchProg(char** args, int background)
 {
     int pid;
@@ -52,6 +67,16 @@ void launchProg(char** args, int background)
         printf("Proceso creado con PID: %d\n", pid);
     }
 }
+
+
+
+
+/** @brief check_process
+ *  Propósito: Verifica el estado de un proceso usando su PID.
+ *  Funcionalidad:
+ *      Evalúa si el proceso está corriendo, si terminó normalmente o
+ *      si fue interrumpido por una señal, y retorna un código de estado.
+*/
 int check_process(pid_t pid)
 {
     if (pid <= 0)
@@ -81,6 +106,15 @@ int check_process(pid_t pid)
     }
     return 0; // Error en `waitpid` o proceso no encontrado
 }
+
+
+
+
+/** @brief start_monitor
+ *  Inicia un proceso de monitoreo del sistema.
+ *  Lanza el proceso que monitorea el sistema y
+ *  retorna su ID de proceso (PID).
+*/
 pid_t start_monitor(void)
 {
     char current_path[MAX_PATH];
@@ -127,6 +161,15 @@ pid_t start_monitor(void)
 
     return pid_m;
 }
+
+
+
+
+/** @brief stop_process
+ * Detiene el proceso de monitoreo del sistema.
+ * Envia una señal para terminar el proceso identificado por pid.
+ * Retorna 0 si el proceso se detuvo correctamente, y -1 si hubo un error.
+*/
 int stop_process(pid_t pid)
 {
     if (pid <= 0)
@@ -153,6 +196,20 @@ int stop_process(pid_t pid)
     return -1;
 }
 
+
+
+
+
+/**  @brief set_noncanonical_mode
+ * Configura la terminal en modo no canónico.
+ * Funcionalidad:
+ *   Ajusta la configuración de la terminal para permitir la lectura
+ *   de entradas de teclado de inmediato, sin necesidad de pulsar "Enter".
+ *   Permite a programas interactivos capturar y responder a las entradas
+ *   del usuario en tiempo real, lo cual es útil para aplicaciones de
+ *   shell y de monitoreo que necesitan reaccionar de inmediato ante
+ *    las acciones del usuario.
+*/
 void set_noncanonical_mode(void) {
     struct termios new_mode;
     tcgetattr(STDIN_FILENO, &original_mode);
@@ -162,10 +219,37 @@ void set_noncanonical_mode(void) {
     tcsetattr(STDIN_FILENO, TCSANOW, &new_mode);
 }
 
+
+
+
+
+/** @brief reset_terminal_mode
+ *  Restaura la configuración original de la terminal.
+ * Funcionalidad:
+ *   Revierte cualquier cambio realizado en la configuración de la
+ *   terminal (por ejemplo, si se cambió a modo no canónico).
+ *   Es especialmente importante para restaurar la configuración al
+ *   salir de una aplicación de modo terminal, evitando que la terminal
+ *   quede en un estado de configuración inusual.
+*/
 void reset_terminal_mode() {
     tcsetattr(STDIN_FILENO, TCSANOW, &original_mode);
 }
 
+
+
+
+/** @brief handle_keypress
+ * Detecta y maneja las pulsaciones de teclas en la terminal.
+ * Funcionalidad:
+ *   Captura las teclas presionadas por el usuario en modo no canónico,
+ *   lo cual permite que las entradas se procesen de inmediato sin requerir
+ *    que el usuario presione "Enter".
+ *   Dependiendo de la tecla presionada, la función puede ejecutar comandos
+ *    específicos como salir, pausar, o realizar otras acciones.
+ *   Esta función es fundamental para aplicaciones interactivas en la
+ *   terminal, como una shell o un menú de control.
+*/
 void handle_keypress() {
     char ch;
     while (read(STDIN_FILENO, &ch, 1) == 1) {
@@ -188,14 +272,41 @@ void handle_keypress() {
     }
 }
 
-// Manejador para el timeout
+
+
+
+/** @brief timeout_handler
+ *  Maneja el evento de tiempo de espera o inactividad.
+ *  Funcionalidad:
+ *   Se activa cuando el programa ha alcanzado un tiempo de espera,
+ *   lo cual puede ser el resultado de inactividad del usuario o de no
+ *   recibir una respuesta esperada.
+ *   Esta función podría realizar acciones como restaurar el sistema a
+ *   un estado seguro, cerrar sesiones activas, o mostrar un mensaje de
+ *   advertencia.
+ *   Esta función suele asociarse con un temporizador de tipo watchdog
+ *   que controla el estado de la aplicación.
+*/
 void timeout_handler(int sig) {
     if (process.pid > 0) {
         kill(process.pid, SIGTERM);
         //printf("Proceso terminado por timeout \n");
     }
 }
-// Manejador para el temporizador
+
+
+
+
+/** @brief timer_handler
+ * Función que maneja la señal generada por el temporizador.
+ * Funcionalidad:
+ *   Este manejador (handler) se invoca cada vez que el temporizador
+ *   emite una señal, generalmente SIGALRM.
+ *   Puede realizar acciones como actualizar información, refrescar
+ *   la pantalla o recopilar datos de uso del sistema.
+ *   Al ser un manejador de señal, debe ser rápido y no bloquearse,
+ *   ya que la señal podría interrumpir el flujo normal del programa.
+*/
 void timer_handler(int sig) {
     if (process.is_running) {
         kill(process.pid, SIGSTOP);
@@ -206,7 +317,20 @@ void timer_handler(int sig) {
     }
 }
 
-// Configurar temporizador
+
+
+
+/** @brief setup_timer
+ * Configura un temporizador que se activa periódicamente.
+ * Funcionalidad:
+ *   El argumento period define el intervalo en milisegundos.
+ *   Usualmente, configura una señal para que se envíe al proceso
+ *   a intervalos regulares. Por ejemplo, puede utilizar timer_settime
+ *    para establecer un temporizador que emite señales SIGALRM
+ *    o SIGVTALRM.
+ *   Este tipo de temporizador es útil en aplicaciones que requieren
+ *   una acción repetitiva, como monitorear o refrescar datos.
+*/
 void setup_timer(int period) {
     struct sigevent sev;/* Structure to transport application-defined values with signals.  */
     struct itimerspec its;/* POSIX.1b structure for timer start values and intervals.  */
@@ -228,7 +352,24 @@ void setup_timer(int period) {
     timer_settime(process.timer_id, 0, &its, NULL);
 }
 
-// Función para procesar el JSON y controlar el proceso
+
+
+
+
+/** @brief process_control_json
+ * Procesa un mensaje en formato JSON y ejecuta alguna acción en
+ * función del contenido del JSON, generalmente para controlar o comunicar
+ * información al proceso con ID monitor_pid.
+ *
+ * Funcionalidad:
+ *   Recibe una cadena JSON y un identificador de proceso (monitor_pid).
+ *   Parseará el JSON para extraer datos o comandos que se quieran enviar
+ *   al proceso indicado.
+ *   Esto puede incluir comandos de inicio, detención o cambio de estado
+ *   de un proceso. Dependiendo del diseño, esta función puede trabajar
+ *   junto con otras funciones de control de procesos para administrar
+ *   y monitorear el proceso indicado.
+*/
 int process_control_json(const char *json_string, int monitor_pid) {
     cJSON *root = cJSON_Parse(json_string);
     if (!root) {
@@ -280,7 +421,12 @@ int process_control_json(const char *json_string, int monitor_pid) {
 
 
 
-// Función para leer archivo JSON
+
+/** @brief read_json_file
+ *  Lee y aplica la configuración de un archivo JSON.
+ * Lee las configuraciones almacenadas en config.json,
+ * analiza el contenido JSON y lo aplica al proceso de monitoreo (pid).
+*/
 char* read_json_file(const char* filename) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
