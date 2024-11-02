@@ -19,7 +19,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LIMIT 256        // max number of tokens for a command
+#define LIMIT 1024        // max number of tokens for a command
 #define MAXLINE 1024     // Limite de caracteres para el usuario
 #define MIN_PS_ID 30000  // Valor minimo posible de proceso a controlar
 #define MAX_PS_ID 100000 // Valor maximo posible de proceso a controlar
@@ -27,7 +27,9 @@
 struct sigaction act_child;
 struct sigaction act_int;
 
-pid_t pid;
+extern pid_t pid;
+extern pid_t foreground_pid;
+int status;                // Variable para el estado del proceso hijo
 pid_t metric_pid = -1;
 
 int no_reprint_prmpt;
@@ -133,6 +135,7 @@ void welcomeScreen()
 /**
  * @brief signalHandler_child
  * signal handler for SIGCHLD
+ * parte 6tp2
  *  Maneja señales enviadas cuando un proceso hijo cambia de estado.
  * Funcionalidad:
  *   Captura señales como SIGCHLD, que son enviadas al proceso padre
@@ -144,17 +147,29 @@ void welcomeScreen()
  */
 void signalHandler_child(int p)
 {
-    /* Wait for all dead processes.
-     * We use a non-blocking call (WNOHANG) to be sure this signal handler will not
-     * block if a child was cleaned up in another part of the program. */
-    while (waitpid(-1, NULL, WNOHANG) > 0)
+    while (1)
     {
+        pid_t child_pid = waitpid(-1, &status, WNOHANG);
+        if (child_pid == 0) // No hay procesos hijos listos para ser recogidos
+            break;
+        else if (child_pid < 0)
+        {
+            if (errno == ECHILD)
+                break; // No hay procesos hijos
+            perror("waitpid error");
+            break;
+        }
+
+        if (WIFEXITED(status))
+            printf("Proceso hijo %d terminado con exit status %d.\n", child_pid, WEXITSTATUS(status));
+        else if (WIFSIGNALED(status))
+            printf("Proceso hijo %d terminado por señal %d.\n", child_pid, WTERMSIG(status));
     }
-    printf("\n");
 }
 
 /**
  * @signalHandler_int
+ * parte 6tp2
  * Signal handler for SIGINT
  *  Maneja la señal de interrupción (SIGINT) generada, al presionar Ctrl+C.
  *
@@ -169,17 +184,61 @@ void signalHandler_child(int p)
  */
 void signalHandler_int(int p)
 {
-    // We send a SIGTERM signal to the child process
-    if (kill(pid, SIGTERM) == 0)
+    if (pid > 0) // Asegúrate de que hay un proceso en ejecución
     {
-        printf("\nEl proceso %d recibio una señal de interrupcion SIGINT\n", pid);
-        no_reprint_prmpt = 1;
+        if (kill(pid, SIGTERM) == 0)
+        {
+            printf("\nEl proceso %d recibió una señal de interrupción SIGINT y se terminó.\n", pid);
+        }
+        else
+        {
+            perror("Error al enviar SIGTERM al proceso");
+        }
     }
     else
     {
-        printf("\n");
+        printf("\nNo hay proceso en ejecución para recibir SIGINT.\n");
     }
 }
+
+void signalHandler_tstp(int p)
+{
+    if (pid > 0) // Solo si hay un proceso en ejecución
+    {
+        if (kill(pid, SIGTSTP) == 0) // Envía la señal SIGTSTP
+        {
+            printf("\nProceso %d detenido con SIGTSTP.\n", pid);
+        }
+        else
+        {
+            perror("Error al enviar SIGTSTP al proceso");
+        }
+    }
+    else
+    {
+        printf("\nNo hay proceso en ejecución en primer plano para detener.\n");
+    }
+}
+
+void signalHandler_quit(int p)
+{
+    if (pid > 0) // Solo si hay un proceso en ejecución
+    {
+        if (kill(pid, SIGQUIT) == 0) // Envía la señal SIGQUIT
+        {
+            printf("\nProceso %d finalizado con SIGQUIT.\n", pid);
+        }
+        else
+        {
+            perror("Error al enviar SIGQUIT al proceso");
+        }
+    }
+    else
+    {
+        printf("\nNo hay proceso en ejecución en primer plano para finalizar.\n");
+    }
+}
+
 
 /** @brief shellPrompt
  * punto 1 del tp2
@@ -404,7 +463,7 @@ void fileIO(char* args[], char* inputFile, char* outputFile, int option)
 
 /**
  * Manipulacion de pipelines. Gestiona la señal de error SIGPIPE.
- *
+ *parte 7 tp2
  *Funcionalidad:
  *   SIGPIPE se genera cuando un proceso intenta escribir en un
  *   pipe o socket que ha sido cerrado por el otro extremo.
@@ -415,157 +474,97 @@ void fileIO(char* args[], char* inputFile, char* outputFile, int option)
  *   al usuario, manteniendo la estabilidad del programa cuando
  *   se producen errores de conexión o comunicación.
  */
-void pipeHandler(char* args[])
-{
-    int filedes[2]; // pos. 0 salida, pos. 1 entrada del pipe
-    int filedes2[2];
-    int num_cmds = 0;
-    char* command[LIMIT]; // Array auxiliar para almacenar el comando actual
-    pid_t pid;
-    int err = -1;
-    int end = 0;
-    // Variables utilizadas para los bucles
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int l = 0;
 
-    // Cálculo del número de comandos, usando el símbolo '|'
-    while (args[l] != NULL)
-    {
-        if (strcmp(args[l], "|") == 0)
-        {
+
+
+
+void pipeHandler(char* args[]) {
+    int num_cmds = 0;
+    char* command[LIMIT]; // Array para almacenar el comando actual
+    pid_t pid;
+    int pipes[2][2]; // Usaremos dos pipes
+    int i = 0, j = 0;
+
+    // Contar el número de comandos
+    while (args[num_cmds] != NULL) {
+        if (strcmp(args[num_cmds], "|") == 0) {
             num_cmds++;
         }
-        l++;
+        num_cmds++;
     }
-    num_cmds++; // Aumento en uno para contar el último comando
-    // Bucle principal. Para cada comando entre '|', configurará los pipes y
-    // reemplazará la entrada/salida estándar para la ejecución del comando
-    while (args[j] != NULL && end != 1)
-    {
-        k = 0;
-        // Array auxiliar para almacenar el comando que será ejecutado en cada iteración
-        while (strcmp(args[j], "|") != 0)
-        {
-            command[k] = args[j];
-            j++;
-            if (args[j] == NULL)
-            {
-                // La variable 'end' evita que el programa entre de nuevo en el bucle
-                // cuando no hay más argumentos
-                end = 1;
-                k++;
-                break;
+    num_cmds++; // Para contar el último comando
+
+    // Bucle principal
+    while (args[j] != NULL) {
+        int k = 0; // Resetear k para cada comando
+        // Preparar el comando actual
+        while (args[j] != NULL && strcmp(args[j], "|") != 0) {
+            command[k++] = args[j++];
+        }
+        command[k] = NULL; // Finaliza el comando
+
+        // Crea pipes solo si no es el último comando
+        if (i > 0) {
+            if (pipe(pipes[(i - 1) % 2]) == -1) {
+                perror("pipe");
+                exit(EXIT_FAILURE);
             }
-            k++;
         }
-        command[k] = NULL; // Última posición del comando será NULL para `exec`
 
-        j++; // Avanza el índice para el siguiente argumento en `args`
-
-        // Según la iteración, se establecen diferentes descriptores de pipes
-        // Esto permite conectar las entradas y salidas de dos comandos distintos
-        if (i % 2 != 0)
-        {
-            pipe(filedes); // Para índices impares
-        }
-        else
-        {
-            pipe(filedes2); // Para índices pares
-        }
         pid = fork();
+        if (pid == -1) {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        } else if (pid == 0) { // Proceso hijo
+            // Redirección de pipes
+            if (i > 0) {
+                dup2(pipes[(i - 1) % 2][0], STDIN_FILENO); // Entrada del pipe anterior
+            }
+            if (args[j] != NULL) {
+                dup2(pipes[i % 2][1], STDOUT_FILENO); // Salida al pipe actual
+            }
 
-        if (pid == -1)
-        {
-            if (i != num_cmds - 1)
-            {
-                if (i % 2 != 0)
-                {
-                    close(filedes[1]); // Cierra el pipe en índice impar
-                }
-                else
-                {
-                    close(filedes2[1]); // Cierra el pipe en índice par
-                }
+            // Cerrar todos los pipes en el hijo
+            for (int p = 0; p < 2; p++) {
+                close(pipes[p][0]);
+                close(pipes[p][1]);
             }
-            printf("No se pudo crear el proceso hijo\n");
-            return;
+
+            // Ejecutar el comando
+            execvp(command[0], command);
+            perror("execvp"); // Solo se llega aquí si execvp falla
+            exit(EXIT_FAILURE);
         }
-        if (pid == 0)
-        {
-            // Si es el primer comando, redirige la salida estándar al pipe
-            if (i == 0)
-            {
-                dup2(filedes2[1], STDOUT_FILENO);
-            }
-            // Si es el último comando, se redirige la entrada estándar
-            // dependiendo de si el número de comandos es par o impar
-            else if (i == num_cmds - 1)
-            {
-                if (num_cmds % 2 != 0)
-                {
-                    dup2(filedes[0], STDIN_FILENO); // Número impar de comandos
-                }
-                else
-                {
-                    dup2(filedes2[0], STDIN_FILENO); // Número par de comandos
-                }
-            }
-            // Si el comando está en el medio, utiliza dos pipes, uno para
-            // entrada y otro para salida
-            else
-            {
-                if (i % 2 != 0)
-                {
-                    dup2(filedes2[0], STDIN_FILENO);
-                    dup2(filedes[1], STDOUT_FILENO);
-                }
-                else
-                {
-                    dup2(filedes[0], STDIN_FILENO);
-                    dup2(filedes2[1], STDOUT_FILENO);
-                }
-            }
-            // Ejecuta el comando y mata el proceso si falla
-            if (execvp(command[0], command) == err)
-            {
-                kill(getpid(), SIGTERM);
-            }
+
+        // Cerrar pipes en el padre
+        if (i > 0) {
+            close(pipes[(i - 1) % 2][0]); // Cierra la entrada del pipe anterior
         }
-        // CIERRA DESCRIPTORES EN EL PADRE
-        if (i == 0)
-        {
-            close(filedes2[1]); // Cierra la salida del primer pipe
+        if (args[j] != NULL) {
+            close(pipes[i % 2][1]); // Cierra la salida del pipe actual
         }
-        else if (i == num_cmds - 1)
-        {
-            if (num_cmds % 2 != 0)
-            {
-                close(filedes[0]); // Cierra la entrada del pipe en caso impar
-            }
-            else
-            {
-                close(filedes2[0]); // Cierra la entrada del pipe en caso par
-            }
+
+        // Avanza el índice para el siguiente argumento
+        if (args[j] != NULL) {
+            j++; // Saltar el pipe
         }
-        else
-        {
-            if (i % 2 != 0)
-            {
-                close(filedes2[0]);
-                close(filedes[1]);
-            }
-            else
-            {
-                close(filedes[0]);
-                close(filedes2[1]);
-            }
-        }
-        waitpid(pid, NULL, 0); // Espera a que termine el proceso hijo
-        i++;                   // Incrementa el contador para la siguiente iteración
+        i++; // Incrementa el contador para el siguiente comando
+    }
+
+    // Esperar a que todos los procesos hijos terminen
+    for (int p = 0; p < i; p++) {
+        wait(NULL);
+    }
+
+    // Cierra todos los pipes al final
+    for (int p = 0; p < 2; p++) {
+        close(pipes[p][0]);
+        close(pipes[p][1]);
     }
 }
+
+
+
 
 /**
  * @brief commandHandler
@@ -582,23 +581,72 @@ int commandHandler(char* args[])
     int j = 0;
     int fileDescriptor;
     int standardOut;
+    int standardIn;
     int aux;
-    int background = 0;
+    int background = 0;// Bandera para ejecución en segundo plano
     char* args_aux[LIMIT];
     no_reprint_prmpt = 0;
     // caracteres especiales
+    int input_redirect = -1;
+    int output_redirect = -1;
 
-    while (args[j] != NULL)
-    {
-        if ((strcmp(args[j], ">") == 0) || (strcmp(args[j], "<") == 0) || (strcmp(args[j], "&") == 0))
-        {
+
+     // Separar los argumentos y detectar redirección
+    while (args[j] != NULL) {
+        if (strcmp(args[j], ">") == 0) {
+            output_redirect = j;
+            break;
+        } else if (strcmp(args[j], "<") == 0) {
+            input_redirect = j;
+            break;
+        } else if (strcmp(args[j], "&") == 0) {
+            background = 1; // Se detecta que debe ejecutarse en segundo plano
+            args[j] = NULL; // Eliminar '&' de los argumentos
             break;
         }
         args_aux[j] = args[j];
         j++;
     }
+    args_aux[j] = NULL; // Asegúrate de terminar el array
 
-    // 'exit' Termina la shell.
+    // Manejo de redirección de entrada
+    if (input_redirect != -1) {
+        if (args[input_redirect + 1] != NULL) {
+            standardIn = dup(STDIN_FILENO); // Guarda stdin original
+            fileDescriptor = open(args[input_redirect + 1], O_RDONLY);
+            if (fileDescriptor < 0) {
+                perror("Error al abrir el archivo de entrada");
+                return -1;
+            }
+            dup2(fileDescriptor, STDIN_FILENO); // Redirige stdin
+            close(fileDescriptor);
+        } else {
+            fprintf(stderr, "Falta el archivo de entrada para redirección\n");
+            return -1;
+        }
+    }
+
+    // Manejo de redirección de salida
+    if (output_redirect != -1) {
+        if (args[output_redirect + 1] != NULL) {
+            standardOut = dup(STDOUT_FILENO); // Guarda stdout original
+            fileDescriptor = open(args[output_redirect + 1], O_CREAT | O_TRUNC | O_WRONLY, 0600);
+            if (fileDescriptor < 0) {
+                perror("Error al abrir el archivo de salida");
+                return -1;
+            }
+            dup2(fileDescriptor, STDOUT_FILENO); // Redirige stdout
+            close(fileDescriptor);
+        } else {
+            fprintf(stderr, "Falta el archivo de salida para redirección\n");
+            return -1;
+        }
+    }
+
+
+
+    // manejo de comandos
+    //  'exit' Termina la shell.
     if (strcmp(args[0], "quit") == 0)
     {
         printf("Cerrando shell de dario castillo...\n");
@@ -867,7 +915,37 @@ int commandHandler(char* args[])
         //		i++;
         //	}
     }
-    return 1;
+    // Crear un nuevo proceso para ejecutar el comando
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Proceso hijo
+        // Restablecer la redirección
+        if (input_redirect != -1) {
+            dup2(standardIn, STDIN_FILENO);
+            close(standardIn);
+        }
+        if (output_redirect != -1) {
+            dup2(standardOut, STDOUT_FILENO);
+            close(standardOut);
+        }
+
+        // Ejecutar el comando si no es un comando interno
+        launchProg(args_aux, 0); // Asegúrate de que launchProg maneje comandos externos
+        exit(0); // Salir del proceso hijo
+    } else if (pid < 0) {
+        perror("Error al crear el proceso");
+    } else {
+        // Proceso padre
+        if (!background) {
+            // Esperar si no es un comando en segundo plano
+            waitpid(pid, NULL, 0);
+        }
+        // Si es un comando en segundo plano, no se espera
+        else {
+            printf("Ejecutando '%s' en segundo plano, PID: %d\n", args_aux[0], pid);
+        }
+    }
+    return 0;
 }
 
 /**
@@ -896,7 +974,7 @@ int main(int argc, char* argv[], char** envp)
     int numTokens;
     struct termios termios, original_mode;
     int no_reprint_prmpt = 0; // to prevent the printing of the shell after certain methods
-    pid = -10;            // we initialize pid to an pid that is not possible
+    pid = -10;                // we initialize pid to an pid that is not possible
 
     // Obtener la configuración original de la terminal
     tcgetattr(STDIN_FILENO, &original_mode);
@@ -908,6 +986,10 @@ int main(int argc, char* argv[], char** envp)
 
     // Configurar el manejador de señales
     signal(SIGINT, signalHandler_int);
+    signal(SIGTSTP, signalHandler_tstp); // Manejo para CTRL-Z
+    signal(SIGQUIT, signalHandler_quit); // Manejo para CTRL-\
+    signal(SIGCHLD, signalHandler_child); // Manejo para la finalización de procesos hijos
+
 
     // Inicialización y la pantalla de bienvenida
     init();
@@ -935,20 +1017,13 @@ int main(int argc, char* argv[], char** envp)
         memset(line, '\0', MAXLINE);
 
         // Imprimir el prompt si no hay necesidad de reimpresión
-        if (no_reprint_prmpt == 0)
-        {
-            shellPrompt();
-        }
 
-
-
-        // Imprimir el prompt si no hay archivo abierto
+         // Si estamos leyendo de un archivo, no imprimimos el prompt
         if (!fp) {
-            shellPrompt();
+            shellPrompt(); // Solo imprimir si estamos en modo interactivo
         }
+
         // Vaciado de la línea y captura del ingreso del usuario
-
-
         // Lee desde el archivo si está abierto, o desde stdin si no
         if (fp)
         {
@@ -959,7 +1034,8 @@ int main(int argc, char* argv[], char** envp)
         }
         else
         {
-            if (fgets(line, MAXLINE, stdin) == NULL) {
+            if (fgets(line, MAXLINE, stdin) == NULL)
+            {
                 break; // Salir si hay un error en stdin
             }
         }

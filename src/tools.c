@@ -7,7 +7,8 @@
 #include "util.h"
 struct termios original_mode;
 ProcessControl process = {0};
-
+pid_t pid;
+pid_t foreground_pid = -1;
 
 /** @brief launchProg
  * punto 3 de tp2
@@ -23,7 +24,8 @@ ProcessControl process = {0};
 */
 void launchProg(char** args, int background)
 {
-    pid_t pid;
+
+    char currentDirectory[1024];
 
     if (args[0] == NULL)
     {
@@ -39,40 +41,42 @@ void launchProg(char** args, int background)
 
     if (pid == 0)
     {
-        // Proceso hijo
-        signal(SIGINT, SIG_IGN); // Ignora SIGINT en el proceso hijo
+        // Proceso hijo: restaurar comportamiento de SIGINT para primer plano
+        if (background == 0)
+        {
+            signal(SIGINT, SIG_DFL); // Proceso en primer plano recibe SIGINT
+        }
+        else
+        {
+            signal(SIGINT, SIG_IGN); // Proceso en segundo plano ignora SIGINT
+        }
 
-        // Establece la variable de entorno 'parent' al directorio actual
-        if (setenv("parent", getcwd(currentDirectory, 1024), 1) == -1)
+        if (setenv("parent", getcwd(currentDirectory, sizeof(currentDirectory)), 1) == -1)
         {
             perror("Error al establecer la variable de entorno 'parent'");
             exit(EXIT_FAILURE);
         }
 
-        // Usa execvp para permitir múltiples argumentos
         if (execvp(args[0], args) == -1)
         {
             perror("Error al ejecutar el comando");
             exit(EXIT_FAILURE);
         }
-        // Si llegamos aquí, hubo un error
-        exit(EXIT_FAILURE);
     }
 
     // Proceso padre
     if (background == 0)
     {
-        // Esperar a que el hijo termine
+        // Establecer foreground_pid y esperar a que el hijo termine
+        foreground_pid = pid;
         waitpid(pid, NULL, 0);
+        foreground_pid = -1; // Resetear foreground_pid después de la espera
     }
     else
     {
-        // Proceso en segundo plano
-        printf("Proceso creado con PID: %d\n", pid);
+        printf("Proceso creado en segundo plano con PID: %d\n", pid);
     }
 }
-
-
 
 
 
