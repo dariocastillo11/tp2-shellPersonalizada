@@ -93,10 +93,6 @@ void init()
     }
 }
 
-
-
-
-
 /**
  * @brief welcomeScreen
  * Muestra una pantalla de bienvenida o introducción al usuario.
@@ -131,11 +127,6 @@ void welcomeScreen()
     printf("\tIngrese un comando: \n ");
 }
 
-
-
-
-
-
 /**
  * SIGNAL HANDLERS
  */
@@ -151,7 +142,8 @@ void welcomeScreen()
  *   Es útil para aplicaciones que lanzan procesos secundarios y
  *   necesitan monitorear su estado sin bloquear el programa principal.
  */
-void signalHandler_child(int p){
+void signalHandler_child(int p)
+{
     /* Wait for all dead processes.
      * We use a non-blocking call (WNOHANG) to be sure this signal handler will not
      * block if a child was cleaned up in another part of the program. */
@@ -160,12 +152,6 @@ void signalHandler_child(int p){
     }
     printf("\n");
 }
-
-
-
-
-
-
 
 /**
  * @signalHandler_int
@@ -195,44 +181,51 @@ void signalHandler_int(int p)
     }
 }
 
-
-
-
-
-
-
-
-
 /** @brief shellPrompt
+ * punto 1 del tp2
  *	Muestra por pantalla el promt de la shell
  *  Muestra el nombre del directorio actual donde está la shell,
  *  esperando la entrada del usuario para el próximo comando.
  */
-void shellPrompt(){
+void shellPrompt()
+{
     char hostname[1024];
     char cwd[1024];
-    // Get hostname
+
+    // Obtener el nombre del host
     if (gethostname(hostname, sizeof(hostname)) == -1)
     {
         perror("gethostname");
         exit(EXIT_FAILURE);
     }
-    // Get current working directory
+    // Obtener el directorio de trabajo actual
     if (getcwd(cwd, sizeof(cwd)) == NULL)
     {
         perror("getcwd");
         exit(EXIT_FAILURE);
     }
-    // colorization
-    printf("\033[1;32m%s\033[0m@\033[1;34m%s\033[0m \033[1;36m%s\033[0m |--> ", getenv("USER"), hostname, cwd);
+    // Obtener el nombre de usuario
+    char* username = getenv("USER");
+
+    // Convertir el directorio home a ~
+    char* home = getenv("HOME");
+    char currentDir[1024];
+
+    if (strncmp(cwd, home, strlen(home)) == 0)
+    {
+        snprintf(currentDir, sizeof(currentDir), "~%s", cwd + strlen(home)); // Añadir '~' antes del directorio relativo
+    }
+    else
+    {
+        snprintf(currentDir, sizeof(currentDir), "%s", cwd); // Usar el camino completo
+    }
+
+    // Imprimir el prompt con el texto "sheldario -->"
+    printf("ShellDarìo --> \033[1;32m%s\033[0m@\033[1;34m%s\033[0m:\033[1;36m%s\033[0m$ ", username, hostname,
+           currentDir);
+
+    fflush(stdout); // Asegurarse de que se muestre el prompt correctamente
 }
-
-
-
-
-
-
-
 
 /**
  * @brief changeDirectory  CD
@@ -245,6 +238,10 @@ void shellPrompt(){
  */
 int changeDirectory(char* args[])
 {
+    char* prev_dir = getenv("OLDPWD"); // Guarda el directorio anterior
+    char current_dir[1024];
+    getcwd(current_dir, sizeof(current_dir)); // Obtén el directorio actual
+
     if (args[1] == NULL)
     {
         // Cambiar al directorio home
@@ -254,34 +251,37 @@ int changeDirectory(char* args[])
             return -1;
         }
     }
+    else if (strcmp(args[1], "-") == 0)
+    {
+        if (prev_dir != NULL)
+        {
+            printf("%s\n", prev_dir); // Imprime el directorio anterior
+            if (chdir(prev_dir) == -1)
+            {
+                fprintf(stderr, "Error al cambiar al directorio anterior: %s\n", strerror(errno));
+                return -1;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "No hay un directorio anterior.\n");
+            return -1;
+        }
+    }
     else
     {
         // Cambiar al directorio especificado
         if (chdir(args[1]) == -1)
         {
-            switch (errno)
-            {
-            case ENOENT:
-                fprintf(stderr, "El directorio '%s' no existe.\n", args[1]);
-                break;
-            case EACCES:
-                fprintf(stderr, "No tienes permiso para acceder al directorio '%s'.\n", args[1]);
-                break;
-            default:
-                perror(args[1]);
-            }
+            perror(args[1]);
             return -1;
         }
     }
+
+    setenv("OLDPWD", current_dir, 1);                           // Actualiza OLDPWD
+    setenv("PWD", getcwd(current_dir, sizeof(current_dir)), 1); // Actualiza PWD
     return 0;
 }
-
-
-
-
-
-
-
 
 /**
  * @brief manageEnviron
@@ -348,13 +348,6 @@ int manageEnviron(char* args[], int option)
     return 0;
 }
 
-
-
-
-
-
-
-
 /**
  * @brief launchProg
  * metodo para ejecutar un proceso en segundo plano
@@ -409,12 +402,6 @@ void fileIO(char* args[], char* inputFile, char* outputFile, int option)
     waitpid(pid, NULL, 0);
 }
 
-
-
-
-
-
-
 /**
  * Manipulacion de pipelines. Gestiona la señal de error SIGPIPE.
  *
@@ -428,7 +415,8 @@ void fileIO(char* args[], char* inputFile, char* outputFile, int option)
  *   al usuario, manteniendo la estabilidad del programa cuando
  *   se producen errores de conexión o comunicación.
  */
-void pipeHandler(char* args[]){
+void pipeHandler(char* args[])
+{
     int filedes[2]; // pos. 0 salida, pos. 1 entrada del pipe
     int filedes2[2];
     int num_cmds = 0;
@@ -579,16 +567,6 @@ void pipeHandler(char* args[]){
     }
 }
 
-
-
-
-
-
-
-
-
-
-
 /**
  * @brief commandHandler
  * metodo para receptar y manejar los comandos ingresados por
@@ -598,7 +576,8 @@ void pipeHandler(char* args[]){
  * exit; pwd, cd, envron, setenv, unsetenv, start_monitor
  * status_monitor, stop_monitor, config_proces
  */
-int commandHandler(char* args[]){
+int commandHandler(char* args[])
+{
     int i = 0;
     int j = 0;
     int fileDescriptor;
@@ -608,6 +587,7 @@ int commandHandler(char* args[]){
     char* args_aux[LIMIT];
     no_reprint_prmpt = 0;
     // caracteres especiales
+
     while (args[j] != NULL)
     {
         if ((strcmp(args[j], ">") == 0) || (strcmp(args[j], "<") == 0) || (strcmp(args[j], "&") == 0))
@@ -617,9 +597,13 @@ int commandHandler(char* args[]){
         args_aux[j] = args[j];
         j++;
     }
+
     // 'exit' Termina la shell.
-    if (strcmp(args[0], "exit") == 0)
+    if (strcmp(args[0], "quit") == 0)
+    {
+        printf("Cerrando shell de dario castillo...\n");
         exit(0);
+    }
 
     // 'pwd' command  Imprime el directorio de trabajo actual.
     // Puede redirigir la salida a un archivo.
@@ -645,12 +629,57 @@ int commandHandler(char* args[]){
             printf("%s\n", getcwd(currentDirectory, 1024));
         }
     }
+
     // 'clear' command limpia pantalla
-    else if (strcmp(args[0], "clear") == 0)
+    else if (strcmp(args[0], "clr") == 0)
         system("clear");
+
     // 'cd' command cambia el directorio actuale
     else if (strcmp(args[0], "cd") == 0)
         changeDirectory(args);
+
+    //'echo'  Muestra <comentario> en la pantalla seguido
+    // de una nueva línea.
+    // Soporta variables de entorno utilizando $
+    else if (strcmp(args[0], "echo") == 0)
+    {
+        for (int k = 1; args[k] != NULL; k++)
+        {
+            if (args[k][0] == '$')
+            {
+                char* env_value = getenv(args[k] + 1); // +1 para omitir el '$'
+                if (env_value != NULL)
+                {
+                    printf("%s ", env_value);
+                }
+                else
+                {
+                    // Intentar buscar la variable en minúsculas también
+                    char lower_var[256];
+                    snprintf(lower_var, sizeof(lower_var), "%s", args[k] + 1);
+                    for (int i = 0; lower_var[i]; i++)
+                    {
+                        lower_var[i] = tolower(lower_var[i]);
+                    }
+                    env_value = getenv(lower_var);
+                    if (env_value != NULL)
+                    {
+                        printf("%s ", env_value);
+                    }
+                    else
+                    {
+                        printf("%s ", args[k]); // Imprimir el nombre de la variable si no existe
+                    }
+                }
+            }
+            else
+            {
+                printf("%s ", args[k]);
+            }
+        }
+        printf("\n");
+    }
+
     // 'environ' command Imprime las variables de entorno.
     else if (strcmp(args[0], "environ") == 0)
     {
@@ -674,12 +703,15 @@ int commandHandler(char* args[]){
             manageEnviron(args, 0);
         }
     }
+
     // 'setenv' command para setear las variables de entorno
     else if (strcmp(args[0], "setenv") == 0)
         manageEnviron(args, 1);
+
     // 'unsetenv' command maneja variables de entorno
     else if (strcmp(args[0], "unsetenv") == 0)
         manageEnviron(args, 2);
+
     // 'start_monitor' command que inicia el monitor de sistema
     else if (strcmp(args[0], "start_monitor") == 0)
     {
@@ -691,6 +723,7 @@ int commandHandler(char* args[]){
         }
         printf("Proceso iniciado con PID: %d\n", metric_pid);
     }
+
     else if (strcmp(args[0], "status_monitor") == 0)
     {
         const char* status[] = {"Error: ID de proceso inválido o fallo en la verificación",
@@ -717,6 +750,7 @@ int commandHandler(char* args[]){
             printf("Código de estado desconocido: %d\n", status_code);
         }
     }
+
     else if (strcmp(args[0], "stop_monitor") == 0)
     {
         // Detener
@@ -729,6 +763,7 @@ int commandHandler(char* args[]){
             printf("Error matando el proceso monitor :c");
         }
     }
+
     else if (strcmp(args[0], "config_process") == 0)
     {
         signal(SIGALRM, timer_handler); // conecto la señal SIGALRM a los handlers correspondientes
@@ -758,6 +793,7 @@ int commandHandler(char* args[]){
                    "start_monitor");
         }
     }
+
     else
     {
         // If none of the preceding commands were used, we invoke the
@@ -834,14 +870,6 @@ int commandHandler(char* args[]){
     return 1;
 }
 
-
-
-
-
-
-
-
-
 /**
  * @brief Main of shell
  * Propósito: Este es el punto de entrada de la shell.
@@ -860,52 +888,81 @@ int commandHandler(char* args[]){
         la entrada del usuario y restaurar el modo original cuando
         la shell se cierre.
  */
-int main(int argc, char* argv[], char** envp){
+int main(int argc, char* argv[], char** envp)
+{
     cJSON* root = cJSON_CreateObject();
     char line[MAXLINE];  // buffer for the user input
     char* tokens[LIMIT]; // array for the different tokens in the command
     int numTokens;
-    struct termios termios;
-    // Habilitar el modo de línea de comandos y el procesamiento de secuencias de escape
-    termios.c_lflag |= ICANON;
-    termios.c_lflag |= ISIG;
-    no_reprint_prmpt = 0; // to prevent the printing of the shell
-                          // after certain methods
+    struct termios termios, original_mode;
+    int no_reprint_prmpt = 0; // to prevent the printing of the shell after certain methods
     pid = -10;            // we initialize pid to an pid that is not possible
 
-    // initialization and the welcome screen
+    // Obtener la configuración original de la terminal
+    tcgetattr(STDIN_FILENO, &original_mode);
+
+    // Habilitar el modo de línea de comandos y el procesamiento de secuencias de escape
+    termios = original_mode;
+    termios.c_lflag |= ICANON;
+    termios.c_lflag |= ISIG;
+
+    // Configurar el manejador de señales
+    signal(SIGINT, signalHandler_int);
+
+    // Inicialización y la pantalla de bienvenida
     init();
     welcomeScreen();
-    // asigno las variables de entorno
+    // Asigno las variables de entorno
     environ = envp;
     // Asigno al directorio actual la shell
     setenv("shell", getcwd(currentDirectory, 1024), 1);
-    // Asigno la variable local LD_LIBRARY_PATH /usr/local/lib64/:$LD_LIBRARY_PATH
-    /*
-     * char envi[2] = {"LD_LIBRARY_PATH","/usr/local/lib64/:$LD_LIBRARY_PATH"} ;
-    manageEnviron(envi, 1);
-     */
-    // Main loop, where the user input will be read and the prompt
-    // will be printed
-    // Configuración en modo no canónico antes del bucle principal
-    // set_noncanonical_mode();
+
+    // Abre el archivo si se pasa como argumento. parte 4 tp2
+    FILE* fp = NULL;
+    if (argc > 1)
+    {
+        fp = fopen(argv[1], "r");
+        if (fp == NULL)
+        {
+            perror("Error abriendo el archivo");
+            return EXIT_FAILURE;
+        }
+    }
+
+    // Main loop, donde se leerá la entrada del usuario y se imprimirá el prompt
     while (TRUE)
     {
+        memset(line, '\0', MAXLINE);
+
         // Imprimir el prompt si no hay necesidad de reimpresión
         if (no_reprint_prmpt == 0)
         {
             shellPrompt();
         }
-        no_reprint_prmpt = 0;
 
+
+
+        // Imprimir el prompt si no hay archivo abierto
+        if (!fp) {
+            shellPrompt();
+        }
         // Vaciado de la línea y captura del ingreso del usuario
-        memset(line, '\0', MAXLINE);
 
-        // Manejar teclas de control antes de leer el comando
-        // handle_keypress();
 
-        // Ingreso del usuario
-        fgets(line, MAXLINE, stdin);
+        // Lee desde el archivo si está abierto, o desde stdin si no
+        if (fp)
+        {
+            if (fgets(line, MAXLINE, fp) == NULL)
+            {
+                break; // Si no hay más líneas, salir del bucle
+            }
+        }
+        else
+        {
+            if (fgets(line, MAXLINE, stdin) == NULL) {
+                break; // Salir si hay un error en stdin
+            }
+        }
 
         // Si la línea está vacía, continúa el bucle
         if ((tokens[0] = strtok(line, " \n\t")) == NULL)
@@ -919,9 +976,17 @@ int main(int argc, char* argv[], char** envp){
         {
             numTokens++;
         }
+
         // Llamada al manejador de comandos
         commandHandler(tokens);
     }
+
+    // Cierre del archivo si fue abierto. parte 4 tp2
+    if (fp)
+    {
+        fclose(fp);
+    }
+
     // Restaurar modo original cuando la terminal cierre
     reset_terminal_mode();
 

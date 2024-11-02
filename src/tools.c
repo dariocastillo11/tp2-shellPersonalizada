@@ -9,8 +9,8 @@ struct termios original_mode;
 ProcessControl process = {0};
 
 
-
 /** @brief launchProg
+ * punto 3 de tp2
  Ejecuta un programa externo con los argumentos dados
  args[]:  Array de cadenas que representa el comando y sus argumentos.
  background: Indica si el proceso debe ejecutarse en segundo plano.
@@ -23,34 +23,38 @@ ProcessControl process = {0};
 */
 void launchProg(char** args, int background)
 {
-    int pid;
+    pid_t pid;
 
     if (args[0] == NULL)
     {
         fprintf(stderr, "Error: No se ha especificado un comando.\n");
         return;
     }
+
     if ((pid = fork()) == -1)
     {
         perror("Error al crear el proceso hijo");
         return;
     }
+
     if (pid == 0)
     {
         // Proceso hijo
-        signal(SIGINT, SIG_IGN);
+        signal(SIGINT, SIG_IGN); // Ignora SIGINT en el proceso hijo
+
+        // Establece la variable de entorno 'parent' al directorio actual
         if (setenv("parent", getcwd(currentDirectory, 1024), 1) == -1)
         {
             perror("Error al establecer la variable de entorno 'parent'");
             exit(EXIT_FAILURE);
         }
 
-        if (execlp(args[0], args[0], args[1], args[2], NULL) == -1)
+        // Usa execvp para permitir múltiples argumentos
+        if (execvp(args[0], args) == -1)
         {
             perror("Error al ejecutar el comando");
             exit(EXIT_FAILURE);
         }
-
         // Si llegamos aquí, hubo un error
         exit(EXIT_FAILURE);
     }
@@ -67,6 +71,7 @@ void launchProg(char** args, int background)
         printf("Proceso creado con PID: %d\n", pid);
     }
 }
+
 
 
 
