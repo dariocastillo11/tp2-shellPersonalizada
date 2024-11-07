@@ -62,5 +62,3 @@ CMakeUserPresets.json
 
 # .vscode
 .vscode/
-
-prometheus-client-c/

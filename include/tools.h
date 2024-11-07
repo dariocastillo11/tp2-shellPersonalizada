@@ -26,7 +26,6 @@
 #define MAX_PATH 1024
 #define METRIC_RELATIVE_PATH "../../so-i-24-chp2-dariocastillo11/metrics"
 
-
 /**
  * @brief Estructura que representa la configuración de control
  * de un proceso.
@@ -40,16 +39,11 @@ typedef struct
     timer_t timer_id; // id de timer
 } ProcessControl;
 
-
-
 /**
  * @brief Inicia el monitor en segundo plano y devuelve el PID del proceso monitor.
  * @return pid_t El PID del proceso monitor, o -1 en caso de error.
  */
 pid_t start_monitor();
-
-
-
 
 /**
  * @brief Verifica si un proceso con el PID dado está activo.
@@ -59,8 +53,6 @@ pid_t start_monitor();
  */
 int check_process(pid_t pid);
 
-
-
 /**
  * @brief Detiene un proceso monitor en ejecución.
  *
@@ -68,8 +60,6 @@ int check_process(pid_t pid);
  * @return pid_t El PID del proceso detenido, o -1 en caso de error.
  */
 pid_t stop_process(pid_t pid);
-
-
 
 /**
  * @brief Lanza un proceso con los argumentos proporcionados y permite la opción de ejecutarlo en segundo plano.
@@ -79,8 +69,6 @@ pid_t stop_process(pid_t pid);
  */
 void launchProg(char** args, int background);
 
-
-
 /**
  * @brief Administra y maneja el contenido JSON utilizando la biblioteca cJSON.
  *
@@ -88,26 +76,20 @@ void launchProg(char** args, int background);
  */
 void cjson_manager(int doc);
 
-
-
 /**
  * @brief Restablece el modo de la terminal a la configuración original (modo canónico).
  */
 void reset_terminal_mode(void);
-
 
 /**
  * @brief Detecta y maneja la pulsación de teclas en la terminal.
  */
 void handle_keypress();
 
-
-
 /**
  * @brief Configura la terminal en modo no canónico para capturar las teclas inmediatamente.
  */
 void set_noncanonical_mode();
-
 
 /**
  * @brief Manejador de señales para eventos de temporizador.
@@ -116,14 +98,12 @@ void set_noncanonical_mode();
  */
 void timer_handler(int sig);
 
-
 /**
  * @brief Configura un temporizador con un intervalo determinado en segundos.
  *
  * @param period El período de tiempo en segundos para el temporizador.
  */
 void setup_timer(int period);
-
 
 /**
  * @brief Procesa un JSON para controlar el comportamiento del proceso basado en la configuración.
@@ -134,14 +114,12 @@ void setup_timer(int period);
  */
 int process_control_json(const char* json_string, int pid);
 
-
 /**
  * @brief Manejador de señal que se activa cuando el temporizador alcanza su límite.
  *
  * @param sig La señal que indica el tiempo de espera cumplido.
  */
 void timeout_handler(int sig);
-
 
 /**
  * @brief Lee un archivo JSON y devuelve su contenido como una cadena.
