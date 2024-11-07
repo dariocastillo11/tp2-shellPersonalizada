@@ -1,0 +1,6 @@
+[submodule "lib/tp1-s.op"]
+    path = lib/tp1-s.op
+    url = https://github.com/dariocastillo11/tp1-s.op.git
+[submodule "lib/prometheus-client-c"]
+    path = lib/prometheus-client-c
+    url = https://github.com/digitalocean/prometheus-client-c.git
