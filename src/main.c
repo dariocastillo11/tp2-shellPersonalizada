@@ -29,6 +29,7 @@ struct sigaction act_int;
 
 pid_t pid;
 pid_t metric_pid = -1;
+pid_t monitor_pid = -1; // Variable global para almacenar el PID del proceso de monitoreo
 
 int no_reprint_prmpt;
 
@@ -118,11 +119,6 @@ void welcomeScreen()
            tm_now->tm_hour, tm_now->tm_min, tm_now->tm_sec);
     printf("\t============================================\n");
     printf("\033[0m"); // Restablecer color y estilo predeterminados
-    printf("\n\tMenú de Opciones:\n");
-    printf("\t1. start_monitor para iniciar la ejecucion \n");
-    printf("\t2. status_monitor para comprobar el estado del monitor\n");
-    printf("\t3. stop_monitor para matar el monitor\n");
-    printf("\t3. config_monitor para configurar tiempos del monitor\n");
 
     printf("\tIngrese un comando: \n ");
 }
@@ -224,7 +220,7 @@ void shellPrompt()
     printf("ShellDarìo --> \033[1;32m%s\033[0m@\033[1;34m%s\033[0m:\033[1;36m%s\033[0m$ ", username, hostname,
            currentDir);
 
-    fflush(stdout); // Asegurarse de que se muestre el prompt correctamente
+    fflush(stdout); // para que se muestre el prompt correctamente
 }
 
 /**
@@ -578,6 +574,8 @@ void pipeHandler(char* args[])
  */
 int commandHandler(char* args[])
 {
+
+
     int i = 0;
     int j = 0;
     int fileDescriptor;
@@ -713,56 +711,71 @@ int commandHandler(char* args[])
         manageEnviron(args, 2);
 
     // 'start_monitor' command que inicia el monitor de sistema
-    else if (strcmp(args[0], "start_monitor") == 0)
+   else if (strcmp(args[0], "start_monitor") == 0)
+{
+    pid_t pid = fork(); // Crear un proceso hijo
+
+    if (pid == -1)
     {
-        metric_pid = start_monitor();
-        if (metric_pid <= 0)
-        {
-            printf("Error al iniciar el proceso\n");
-            return 1;
-        }
-        printf("Proceso iniciado con PID: %d\n", metric_pid);
+        // Error al crear el proceso
+        printf("Error al iniciar el proceso de monitoreo.\n");
+        return 1;
     }
 
-    else if (strcmp(args[0], "status_monitor") == 0)
+    if (pid == 0)
     {
-        const char* status[] = {"Error: ID de proceso inválido o fallo en la verificación",
-                                "Proceso terminó normalmente", "Proceso sigue ejecutándose",
-                                "Proceso terminó por una señal", "Proceso está detenido"};
+        // En el proceso hijo: Ejecutar el ejecutable 'monitoreo'
+        char* exec_args[] = {"./monitoreo", NULL}; // Usar ruta relativa si el ejecutable está en el mismo directorio
+        execvp(exec_args[0], exec_args); // Reemplazar el proceso actual por 'monitoreo'
 
-        // Verificar si el monitor está iniciado
-        if (metric_pid <= 0)
-        {
-            printf("El monitor aún no se ha iniciado. Para iniciarlo, escriba el comando: start_monitor\n");
-            return 1;
-        }
-
-        // Obtener el estado del proceso
-        int status_code = check_process(metric_pid);
-
-        // Validar el índice para evitar accesos fuera de rango
-        if (status_code >= -1 && status_code <= 4)
-        {
-            printf("%s\n", status[status_code]); // Ajuste de índice para el array `status`
-        }
-        else
-        {
-            printf("Código de estado desconocido: %d\n", status_code);
-        }
+        // Si execvp falla
+        perror("Error al ejecutar monitoreo");
+        exit(1);
     }
+    else
+    {
+        // En el proceso padre: Guardar el PID del proceso de monitoreo
+        monitor_pid = pid;
+        printf("Monitor iniciado con PID: %d\n", pid);
+    }
+}
+
+
+    // Comando 'status_monitor' que obtiene y muestra las métricas del monitor
+else if (strcmp(args[0], "status_monitor") == 0)
+{
+    // Ejecutar 'curl' desde la shell para obtener las métricas
+    int result = system("curl -s http://localhost:9090/metrics"); // Utiliza 'curl' para obtener las métricas
+
+    if (result == -1)
+    {
+        printf("Error al obtener las métricas del monitor.\n");
+    }
+}
+
 
     else if (strcmp(args[0], "stop_monitor") == 0)
+{
+    if (monitor_pid == -1)
     {
-        // Detener
-        if (stop_process(metric_pid) == 0)
+        // No se ha iniciado el monitor
+        printf("No se ha iniciado el proceso de monitoreo.\n");
+    }
+    else
+    {
+        // Enviar señal SIGTERM para terminar el proceso de monitoreo
+        if (kill(monitor_pid, SIGTERM) == 0)
         {
-            printf("Proceso detenido correctamente\n");
+            printf("Proceso de monitoreo detenido correctamente.\n");
+            monitor_pid = -1; // Resetear el PID después de detener el proceso
         }
         else
         {
-            printf("Error matando el proceso monitor :c");
+            perror("Error al intentar detener el proceso de monitoreo");
         }
     }
+}
+
 
     else if (strcmp(args[0], "config_process") == 0)
     {
@@ -896,7 +909,7 @@ int main(int argc, char* argv[], char** envp)
     int numTokens;
     struct termios termios, original_mode;
     int no_reprint_prmpt = 0; // to prevent the printing of the shell after certain methods
-    pid = -10;            // we initialize pid to an pid that is not possible
+    pid = -10;                // we initialize pid to an pid that is not possible
 
     // Obtener la configuración original de la terminal
     tcgetattr(STDIN_FILENO, &original_mode);
@@ -949,7 +962,8 @@ int main(int argc, char* argv[], char** envp)
         }
         else
         {
-            if (fgets(line, MAXLINE, stdin) == NULL) {
+            if (fgets(line, MAXLINE, stdin) == NULL)
+            {
                 break; // Salir si hay un error en stdin
             }
         }

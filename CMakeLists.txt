@@ -22,23 +22,27 @@ include_directories(include)
 find_package(cJSON REQUIRED)
 find_package(unity REQUIRED)
 
-# Incluir el submódulo de prometheus-client-c
-add_subdirectory(lib/prometheus-client-c)
+
 # Incluir el submódulo tp1-s.op
 add_subdirectory(lib/tp1-s.op)
 # Agregar Unity como subdirectorio
 add_subdirectory(lib/unity)
-# add_executable -->.exe/bnary
-# Crear el ejecutable
-#add_library ---> .a/.so/.dll STATC SHARED
-add_executable(ShellProject src/main.c src/tools.c)
 
-target_link_libraries(ShellProject PRIVATE cjson::cjson unity::unity)
+
+add_executable(Shelltp2 src/main.c src/tools.c )
+
+target_link_libraries(Shelltp2 PRIVATE cjson::cjson unity::unity)
+
+# Crear un ejecutable para el submódulo
+add_executable(monitoreo
+    lib/tp1-s.op/src/main.c  # El archivo main.c del submódulo
+    lib/tp1-s.op/src/expose_metrics.c
+    lib/tp1-s.op/src/metrics.c)
+# Enlazar bibliotecas para el submódulo
+target_link_libraries(monitoreo PRIVATE tp1-s-op)
+
 
 if(RUN_COVERAGE EQUAL 1)
     message("Run with coverage")
     #add_subdirectory(test)
 endif()
-
-# Vincular las bibliotecas del submódulo tp1-s.op
-target_link_libraries(ShellProject PRIVATE tp1-s.op)
