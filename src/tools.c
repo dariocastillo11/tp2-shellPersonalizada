@@ -1,11 +1,22 @@
 /**
- * @author DARIO ALBERTO CASTILLO
- * @file util.c
- * @brief En
+ * @file tools.c
+ * @brief Implementación de funciones de herramientas y utilidades.
+ *
+ * Este archivo contiene la implementación de funciones relacionadas
+ * con herramientas y utilidades generales del sistema, además de
+ * manejar variables globales como el estado del terminal.
+ *
+ * Created by DARIO on 27/10/24.
  */
 #include "tools.h"
 #include "util.h"
+/**
+ * @brief Defi
+ */
 struct termios original_mode;
+/**
+ * @brief Defi
+ */
 ProcessControl process = {0};
 
 
@@ -77,6 +88,7 @@ void launchProg(char** args, int background)
 
 
 /** @brief check_process
+ * @return asd
  *  Propósito: Verifica el estado de un proceso usando su PID.
  *  Funcionalidad:
  *      Evalúa si el proceso está corriendo, si terminó normalmente o
@@ -116,6 +128,7 @@ int check_process(pid_t pid)
 
 
 /** @brief start_monitor
+ * @return d
  *  Inicia un proceso de monitoreo del sistema.
  *  Lanza el proceso que monitorea el sistema y
  *  retorna su ID de proceso (PID).
@@ -171,6 +184,8 @@ pid_t start_monitor(void)
 
 
 /** @brief stop_process
+ * @param pid
+ * @return inter
  * Detiene el proceso de monitoreo del sistema.
  * Envia una señal para terminar el proceso identificado por pid.
  * Retorna 0 si el proceso se detuvo correctamente, y -1 si hubo un error.
@@ -374,6 +389,8 @@ void setup_timer(int period) {
  *   de un proceso. Dependiendo del diseño, esta función puede trabajar
  *   junto con otras funciones de control de procesos para administrar
  *   y monitorear el proceso indicado.
+
+ * @return da
 */
 int process_control_json(const char *json_string, int monitor_pid) {
     cJSON *root = cJSON_Parse(json_string);
@@ -428,6 +445,8 @@ int process_control_json(const char *json_string, int monitor_pid) {
 
 
 /** @brief read_json_file
+
+ * @return char asd
  *  Lee y aplica la configuración de un archivo JSON.
  * Lee las configuraciones almacenadas en config.json,
  * analiza el contenido JSON y lo aplica al proceso de monitoreo (pid).

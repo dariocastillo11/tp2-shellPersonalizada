@@ -6,7 +6,13 @@
  */
 #ifndef UTIL_H
 #define UTIL_H
+/**
+ * @brief Defi
+ */
 #define TRUE 1
+/**
+ * @brief Defi
+ */
 #define FALSE !TRUE
 
 // Identificadores y modos de la shell
@@ -42,13 +48,13 @@ void signalHandler_int(int p);
 
 /**
  * @brief signalHandler_tstp
- *
+ * @param p
 */
 void signalHandler_tstp(int p);
 
 /**
  * @brief signalHandler_quit
- *
+ * @param p
 */
 void signalHandler_quit(int p);
 

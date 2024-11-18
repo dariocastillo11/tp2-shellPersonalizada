@@ -64,3 +64,5 @@ CMakeUserPresets.json
 .vscode/
 lib/
 lib/tp1-s.op
+.documentacion
+documentacion/

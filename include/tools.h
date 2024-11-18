@@ -22,8 +22,18 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-
+/**
+ * @brief Define la longitud máxima permitida para una ruta de archivo.
+ *
+ * Este macro se utiliza para definir el tamaño máximo de un buffer
+ * que contendrá una ruta de archivo completa.
+ */
 #define MAX_PATH 1024
+/**
+ * @brief D
+ *
+ *
+ */
 #define METRIC_RELATIVE_PATH "../../so-i-24-chp2-dariocastillo11/metrics"
 
 /**
@@ -32,10 +42,25 @@
  */
 typedef struct
 {
-    pid_t pid;        // Almacena id del proceso
-    int timeout;      // tiempo de vida del proceso
-    int period;       // intervalo de tiempo del proceso
-    int is_running;   // actividad del proceso
+    /**
+     * @brief Defi
+     */
+    pid_t pid; // Almacena id del proceso
+    /**
+     * @brief Defi
+     */
+    int timeout; // tiempo de vida del proceso
+    /**
+     * @brief Defi
+     */
+    int period; // intervalo de tiempo del proceso
+    /**
+     * @brief Defi
+     */
+    int is_running; // actividad del proceso
+    /**
+     * @brief Defi
+     */
     timer_t timer_id; // id de timer
 } ProcessControl;
 
@@ -47,8 +72,7 @@ pid_t start_monitor();
 
 /**
  * @brief Verifica si un proceso con el PID dado está activo.
- *
- * @param pid El ID del proceso a verificar.
+ * @param pid dad
  * @return int 1 si el proceso está activo, 0 si no lo está.
  */
 int check_process(pid_t pid);
@@ -56,7 +80,7 @@ int check_process(pid_t pid);
 /**
  * @brief Detiene un proceso monitor en ejecución.
  *
- * @param pid El ID del proceso a detener.
+ *
  * @return pid_t El PID del proceso detenido, o -1 en caso de error.
  */
 pid_t stop_process(pid_t pid);
@@ -93,8 +117,7 @@ void set_noncanonical_mode();
 
 /**
  * @brief Manejador de señales para eventos de temporizador.
- *
- * @param sig La señal que desencadena el manejo del temporizador.
+ * @param sig
  */
 void timer_handler(int sig);
 
@@ -109,15 +132,14 @@ void setup_timer(int period);
  * @brief Procesa un JSON para controlar el comportamiento del proceso basado en la configuración.
  *
  * @param json_string La cadena JSON que contiene los parámetros de control del proceso.
- * @param pid El ID del proceso a controlar.
+ * @param monitor_pid  El ID del proceso a controlar.
  * @return int 1 si el procesamiento se realizó correctamente, 0 en caso de error.
  */
-int process_control_json(const char* json_string, int pid);
+int process_control_json(const char* json_string, int monitor_pid);
 
 /**
  * @brief Manejador de señal que se activa cuando el temporizador alcanza su límite.
- *
- * @param sig La señal que indica el tiempo de espera cumplido.
+ * @param sig
  */
 void timeout_handler(int sig);
 

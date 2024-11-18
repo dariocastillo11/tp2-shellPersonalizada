@@ -1,0 +1,10 @@
+digraph "setup_timer"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="setup_timer",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="setup_timer Configura un temporizador que se activa periódicamente. Funcionalidad: El argumento perio..."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="process_control_json",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$tools_8h.html#a1c92f692060555a8a8ce86b4c9fd8053",tooltip="Procesa un JSON para controlar el comportamiento del proceso basado en la configuración."];
+}

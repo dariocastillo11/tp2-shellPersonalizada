@@ -1,7 +1,10 @@
 /**
- * @author DARIO ALBERTO CASTILLO
  * @file main.c
- * @brief En
+ * @brief
+ * Created by DARIO on 27/10/24.
+ * declaracones defuncones relacionadas
+ * con herramentas y utildades
+ * @author dario castillo
  */
 #include "tools.h"
 #include "util.h"
