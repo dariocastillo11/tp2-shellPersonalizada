@@ -22,21 +22,21 @@
 #include <time.h>
 #include <unistd.h>
 /**
- * @brief Defi
+ * @brief max number of tokens for a command
  */
-#define LIMIT 256 // max number of tokens for a command
+#define LIMIT 256
+/*
+ * @brief  Limite de caracteres para el usuario
+ */
+#define MAXLINE 1024
 /**
- * @brief Defi
+ * @brief Valor minimo posible de proceso a controlar
  */
-#define MAXLINE 1024 // Limite de caracteres para el usuario
+#define MIN_PS_ID 30000
 /**
- * @brief Defi
+ * @brief Valor maximo posible de proceso a controlar
  */
-#define MIN_PS_ID 30000 // Valor minimo posible de proceso a controlar
-/**
- * @brief Defi
- */
-#define MAX_PS_ID 100000 // Valor maximo posible de proceso a controlar
+#define MAX_PS_ID 100000
 
 struct sigaction act_child;
 struct sigaction act_int;
