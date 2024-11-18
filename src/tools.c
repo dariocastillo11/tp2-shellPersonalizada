@@ -19,7 +19,6 @@ struct termios original_mode;
  */
 ProcessControl process = {0};
 
-
 /** @brief launchProg
  * punto 3 de tp2
  Ejecuta un programa externo con los argumentos dados
@@ -83,17 +82,13 @@ void launchProg(char** args, int background)
     }
 }
 
-
-
-
-
 /** @brief check_process
  * @return asd
  *  Propósito: Verifica el estado de un proceso usando su PID.
  *  Funcionalidad:
  *      Evalúa si el proceso está corriendo, si terminó normalmente o
  *      si fue interrumpido por una señal, y retorna un código de estado.
-*/
+ */
 int check_process(pid_t pid)
 {
     if (pid <= 0)
@@ -124,15 +119,12 @@ int check_process(pid_t pid)
     return 0; // Error en `waitpid` o proceso no encontrado
 }
 
-
-
-
 /** @brief start_monitor
  * @return d
  *  Inicia un proceso de monitoreo del sistema.
  *  Lanza el proceso que monitorea el sistema y
  *  retorna su ID de proceso (PID).
-*/
+ */
 pid_t start_monitor(void)
 {
     char current_path[MAX_PATH];
@@ -180,16 +172,13 @@ pid_t start_monitor(void)
     return pid_m;
 }
 
-
-
-
 /** @brief stop_process
  * @param pid
  * @return inter
  * Detiene el proceso de monitoreo del sistema.
  * Envia una señal para terminar el proceso identificado por pid.
  * Retorna 0 si el proceso se detuvo correctamente, y -1 si hubo un error.
-*/
+ */
 int stop_process(pid_t pid)
 {
     if (pid <= 0)
@@ -216,10 +205,6 @@ int stop_process(pid_t pid)
     return -1;
 }
 
-
-
-
-
 /**  @brief set_noncanonical_mode
  * Configura la terminal en modo no canónico.
  * Funcionalidad:
@@ -229,19 +214,16 @@ int stop_process(pid_t pid)
  *   del usuario en tiempo real, lo cual es útil para aplicaciones de
  *   shell y de monitoreo que necesitan reaccionar de inmediato ante
  *    las acciones del usuario.
-*/
-void set_noncanonical_mode(void) {
+ */
+void set_noncanonical_mode(void)
+{
     struct termios new_mode;
     tcgetattr(STDIN_FILENO, &original_mode);
-    atexit(reset_terminal_mode);  // Reset terminal al salir
+    atexit(reset_terminal_mode); // Reset terminal al salir
     new_mode = original_mode;
-    new_mode.c_lflag &= ~(ICANON | ECHO);  // Desactiva el modo canónico y el eco de la terminal
+    new_mode.c_lflag &= ~(ICANON | ECHO); // Desactiva el modo canónico y el eco de la terminal
     tcsetattr(STDIN_FILENO, TCSANOW, &new_mode);
 }
-
-
-
-
 
 /** @brief reset_terminal_mode
  *  Restaura la configuración original de la terminal.
@@ -251,13 +233,11 @@ void set_noncanonical_mode(void) {
  *   Es especialmente importante para restaurar la configuración al
  *   salir de una aplicación de modo terminal, evitando que la terminal
  *   quede en un estado de configuración inusual.
-*/
-void reset_terminal_mode() {
+ */
+void reset_terminal_mode()
+{
     tcsetattr(STDIN_FILENO, TCSANOW, &original_mode);
 }
-
-
-
 
 /** @brief handle_keypress
  * Detecta y maneja las pulsaciones de teclas en la terminal.
@@ -269,31 +249,45 @@ void reset_terminal_mode() {
  *    específicos como salir, pausar, o realizar otras acciones.
  *   Esta función es fundamental para aplicaciones interactivas en la
  *   terminal, como una shell o un menú de control.
-*/
-void handle_keypress() {
+ */
+void handle_keypress()
+{
     char ch;
-    while (read(STDIN_FILENO, &ch, 1) == 1) {
-        if (ch == 27) {  // Primer caracter de una secuencia de escape
+    while (read(STDIN_FILENO, &ch, 1) == 1)
+    {
+        if (ch == 27)
+        { // Primer caracter de una secuencia de escape
             char seq[2];
-            if (read(STDIN_FILENO, &seq[0], 1) == 1 && read(STDIN_FILENO, &seq[1], 1) == 1) {
-                if (seq[0] == '[') {
-                    switch (seq[1]) {
-                    case 'A': printf("Flecha Arriba\n"); break;
-                    case 'B': printf("Flecha Abajo\n"); break;
-                    case 'C': printf("Flecha Derecha\n"); break;
-                    case 'D': printf("Flecha Izquierda\n"); break;
-                    default: break;
+            if (read(STDIN_FILENO, &seq[0], 1) == 1 && read(STDIN_FILENO, &seq[1], 1) == 1)
+            {
+                if (seq[0] == '[')
+                {
+                    switch (seq[1])
+                    {
+                    case 'A':
+                        printf("Flecha Arriba\n");
+                        break;
+                    case 'B':
+                        printf("Flecha Abajo\n");
+                        break;
+                    case 'C':
+                        printf("Flecha Derecha\n");
+                        break;
+                    case 'D':
+                        printf("Flecha Izquierda\n");
+                        break;
+                    default:
+                        break;
                     }
                 }
             }
-        } else {
+        }
+        else
+        {
             printf("Tecla presionada: %c\n", ch);
         }
     }
 }
-
-
-
 
 /** @brief timeout_handler
  *  Maneja el evento de tiempo de espera o inactividad.
@@ -306,16 +300,15 @@ void handle_keypress() {
  *   advertencia.
  *   Esta función suele asociarse con un temporizador de tipo watchdog
  *   que controla el estado de la aplicación.
-*/
-void timeout_handler(int sig) {
-    if (process.pid > 0) {
+ */
+void timeout_handler(int sig)
+{
+    if (process.pid > 0)
+    {
         kill(process.pid, SIGTERM);
-        //printf("Proceso terminado por timeout \n");
+        // printf("Proceso terminado por timeout \n");
     }
 }
-
-
-
 
 /** @brief timer_handler
  * Función que maneja la señal generada por el temporizador.
@@ -326,19 +319,20 @@ void timeout_handler(int sig) {
  *   la pantalla o recopilar datos de uso del sistema.
  *   Al ser un manejador de señal, debe ser rápido y no bloquearse,
  *   ya que la señal podría interrumpir el flujo normal del programa.
-*/
-void timer_handler(int sig) {
-    if (process.is_running) {
+ */
+void timer_handler(int sig)
+{
+    if (process.is_running)
+    {
         kill(process.pid, SIGSTOP);
         process.is_running = 0;
-    } else {
+    }
+    else
+    {
         kill(process.pid, SIGCONT);
         process.is_running = 1;
     }
 }
-
-
-
 
 /** @brief setup_timer
  * Configura un temporizador que se activa periódicamente.
@@ -350,10 +344,11 @@ void timer_handler(int sig) {
  *    o SIGVTALRM.
  *   Este tipo de temporizador es útil en aplicaciones que requieren
  *   una acción repetitiva, como monitorear o refrescar datos.
-*/
-void setup_timer(int period) {
-    struct sigevent sev;/* Structure to transport application-defined values with signals.  */
-    struct itimerspec its;/* POSIX.1b structure for timer start values and intervals.  */
+ */
+void setup_timer(int period)
+{
+    struct sigevent sev;   /* Structure to transport application-defined values with signals.  */
+    struct itimerspec its; /* POSIX.1b structure for timer start values and intervals.  */
 
     // Configurar el evento del temporizador
     sev.sigev_notify = SIGEV_SIGNAL;
@@ -372,10 +367,6 @@ void setup_timer(int period) {
     timer_settime(process.timer_id, 0, &its, NULL);
 }
 
-
-
-
-
 /** @brief process_control_json
  * Procesa un mensaje en formato JSON y ejecuta alguna acción en
  * función del contenido del JSON, generalmente para controlar o comunicar
@@ -392,46 +383,57 @@ void setup_timer(int period) {
 
  * @return da
 */
-int process_control_json(const char *json_string, int monitor_pid) {
-    cJSON *root = cJSON_Parse(json_string);
-    if (!root) {
+int process_control_json(const char* json_string, int monitor_pid)
+{
+    cJSON* root = cJSON_Parse(json_string);
+    if (!root)
+    {
         printf("Error al parsear JSON\n");
         return -1;
     }
 
     // Obtener PID del proceso
-    cJSON *pid_json = cJSON_GetObjectItem(root, "pid");// por seguridad, solo puedo controlar el funcionamiento del monitor
-    if (pid_json && pid_json->type == cJSON_Number) {
-        process.pid = monitor_pid ; //pid_json->valueint; esta linea se debe incorporar si se desea ampliar el control de procesos
+    cJSON* pid_json =
+        cJSON_GetObjectItem(root, "pid"); // por seguridad, solo puedo controlar el funcionamiento del monitor
+    if (pid_json && pid_json->type == cJSON_Number)
+    {
+        process.pid =
+            monitor_pid; // pid_json->valueint; esta linea se debe incorporar si se desea ampliar el control de procesos
     }
 
     // Obtener acción a realizar
-    cJSON *action = cJSON_GetObjectItem(root, "action");
-    if (action && action->type == cJSON_String) {
-        if (strcmp(action->valuestring, "start") == 0) {
+    cJSON* action = cJSON_GetObjectItem(root, "action");
+    if (action && action->type == cJSON_String)
+    {
+        if (strcmp(action->valuestring, "start") == 0)
+        {
             kill(process.pid, SIGCONT);
             process.is_running = 1;
         }
-        else if (strcmp(action->valuestring, "stop") == 0) {
+        else if (strcmp(action->valuestring, "stop") == 0)
+        {
             kill(process.pid, SIGSTOP);
             process.is_running = 0;
         }
-        else if (strcmp(action->valuestring, "terminate") == 0) {
+        else if (strcmp(action->valuestring, "terminate") == 0)
+        {
             kill(process.pid, SIGTERM);
             process.is_running = 0;
         }
     }
 
     // Configurar temporización si está especificada
-    cJSON *period = cJSON_GetObjectItem(root, "period");
-    if (period && period->type == cJSON_Number) {
+    cJSON* period = cJSON_GetObjectItem(root, "period");
+    if (period && period->type == cJSON_Number)
+    {
         process.period = period->valueint;
         setup_timer(process.period);
     }
 
     // Configurar timeout si está especificado
-    cJSON *timeout = cJSON_GetObjectItem(root, "timeout");
-    if (timeout && timeout->type == cJSON_Number) {
+    cJSON* timeout = cJSON_GetObjectItem(root, "timeout");
+    if (timeout && timeout->type == cJSON_Number)
+    {
         process.timeout = timeout->valueint;
         // Configurar temporizador para terminar el proceso
         alarm(process.timeout);
@@ -441,9 +443,6 @@ int process_control_json(const char *json_string, int monitor_pid) {
     return 0;
 }
 
-
-
-
 /** @brief read_json_file
 
  * @return char asd
@@ -451,9 +450,11 @@ int process_control_json(const char *json_string, int monitor_pid) {
  * Lee las configuraciones almacenadas en config.json,
  * analiza el contenido JSON y lo aplica al proceso de monitoreo (pid).
 */
-char* read_json_file(const char* filename) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
+char* read_json_file(const char* filename)
+{
+    FILE* file = fopen(filename, "r");
+    if (file == NULL)
+    {
         printf("Error al abrir el archivo %s\n", filename); // comprueba que el archivo sea legible
         return NULL;
     }
@@ -464,8 +465,9 @@ char* read_json_file(const char* filename) {
     fseek(file, 0, SEEK_SET);
 
     // Asignar memoria para el contenido
-    char *buffer = (char*)malloc(file_size + 1);
-    if (buffer == NULL) {
+    char* buffer = (char*)malloc(file_size + 1);
+    if (buffer == NULL)
+    {
         fclose(file);
         printf("Error de asignación de memoria\n");
         return NULL;

@@ -45,17 +45,16 @@ void signalHandler_child(int p);
  */
 void signalHandler_int(int p);
 
-
 /**
  * @brief signalHandler_tstp
  * @param p
-*/
+ */
 void signalHandler_tstp(int p);
 
 /**
  * @brief signalHandler_quit
  * @param p
-*/
+ */
 void signalHandler_quit(int p);
 
 /**

@@ -578,7 +578,6 @@ void pipeHandler(char* args[])
 int commandHandler(char* args[])
 {
 
-
     int i = 0;
     int j = 0;
     int fileDescriptor;
@@ -714,71 +713,69 @@ int commandHandler(char* args[])
         manageEnviron(args, 2);
 
     // 'start_monitor' command que inicia el monitor de sistema
-   else if (strcmp(args[0], "start_monitor") == 0)
-{
-    pid_t pid = fork(); // Crear un proceso hijo
-
-    if (pid == -1)
+    else if (strcmp(args[0], "start_monitor") == 0)
     {
-        // Error al crear el proceso
-        printf("Error al iniciar el proceso de monitoreo.\n");
-        return 1;
-    }
+        pid_t pid = fork(); // Crear un proceso hijo
 
-    if (pid == 0)
-    {
-        // En el proceso hijo: Ejecutar el ejecutable 'monitoreo'
-        char* exec_args[] = {"./monitoreo", NULL}; // Usar ruta relativa si el ejecutable está en el mismo directorio
-        execvp(exec_args[0], exec_args); // Reemplazar el proceso actual por 'monitoreo'
-
-        // Si execvp falla
-        perror("Error al ejecutar monitoreo");
-        exit(1);
-    }
-    else
-    {
-        // En el proceso padre: Guardar el PID del proceso de monitoreo
-        monitor_pid = pid;
-        printf("Monitor iniciado con PID: %d\n", pid);
-    }
-}
-
-
-    // Comando 'status_monitor' que obtiene y muestra las métricas del monitor
-else if (strcmp(args[0], "status_monitor") == 0)
-{
-    // Ejecutar 'curl' desde la shell para obtener las métricas
-    int result = system("curl -s http://localhost:8080/metrics"); // Utiliza 'curl' para obtener las métricas
-
-    if (result == -1)
-    {
-        printf("Error al obtener las métricas del monitor.\n");
-    }
-}
-
-
-    else if (strcmp(args[0], "stop_monitor") == 0)
-{
-    if (monitor_pid == -1)
-    {
-        // No se ha iniciado el monitor
-        printf("No se ha iniciado el proceso de monitoreo.\n");
-    }
-    else
-    {
-        // Enviar señal SIGTERM para terminar el proceso de monitoreo
-        if (kill(monitor_pid, SIGTERM) == 0)
+        if (pid == -1)
         {
-            printf("Proceso de monitoreo detenido correctamente.\n");
-            monitor_pid = -1; // Resetear el PID después de detener el proceso
+            // Error al crear el proceso
+            printf("Error al iniciar el proceso de monitoreo.\n");
+            return 1;
+        }
+
+        if (pid == 0)
+        {
+            // En el proceso hijo: Ejecutar el ejecutable 'monitoreo'
+            char* exec_args[] = {"./monitoreo",
+                                 NULL};      // Usar ruta relativa si el ejecutable está en el mismo directorio
+            execvp(exec_args[0], exec_args); // Reemplazar el proceso actual por 'monitoreo'
+
+            // Si execvp falla
+            perror("Error al ejecutar monitoreo");
+            exit(1);
         }
         else
         {
-            perror("Error al intentar detener el proceso de monitoreo");
+            // En el proceso padre: Guardar el PID del proceso de monitoreo
+            monitor_pid = pid;
+            printf("Monitor iniciado con PID: %d\n", pid);
         }
     }
-}
 
+    // Comando 'status_monitor' que obtiene y muestra las métricas del monitor
+    else if (strcmp(args[0], "status_monitor") == 0)
+    {
+        // Ejecutar 'curl' desde la shell para obtener las métricas
+        int result = system("curl -s http://localhost:8080/metrics"); // Utiliza 'curl' para obtener las métricas
+
+        if (result == -1)
+        {
+            printf("Error al obtener las métricas del monitor.\n");
+        }
+    }
+
+    else if (strcmp(args[0], "stop_monitor") == 0)
+    {
+        if (monitor_pid == -1)
+        {
+            // No se ha iniciado el monitor
+            printf("No se ha iniciado el proceso de monitoreo.\n");
+        }
+        else
+        {
+            // Enviar señal SIGTERM para terminar el proceso de monitoreo
+            if (kill(monitor_pid, SIGTERM) == 0)
+            {
+                printf("Proceso de monitoreo detenido correctamente.\n");
+                monitor_pid = -1; // Resetear el PID después de detener el proceso
+            }
+            else
+            {
+                perror("Error al intentar detener el proceso de monitoreo");
+            }
+        }
+    }
 
     else if (strcmp(args[0], "config_process") == 0)
     {
