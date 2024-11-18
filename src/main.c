@@ -25,7 +25,7 @@
  * @brief max number of tokens for a command
  */
 #define LIMIT 256
-/*
+/**
  * @brief  Limite de caracteres para el usuario
  */
 #define MAXLINE 1024
@@ -37,14 +37,29 @@
  * @brief Valor maximo posible de proceso a controlar
  */
 #define MAX_PS_ID 100000
-
+/**
+ * @brief Valor maximo posible de proceso a controlar
+ */
 struct sigaction act_child;
+/**
+ * @brief Valor maximo posible de proceso a controlar
+ */
 struct sigaction act_int;
-
+/**
+ * @brief
+ */
 pid_t pid;
+/**
+ * @brief V
+ */
 pid_t metric_pid = -1;
+/**
+ * @brief
+ */
 pid_t monitor_pid = -1; // Variable global para almacenar el PID del proceso de monitoreo
-
+/**
+ * @brief Valo
+ */
 int no_reprint_prmpt;
 
 /**
