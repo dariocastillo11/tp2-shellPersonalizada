@@ -46,7 +46,7 @@ struct sigaction act_child;
  */
 struct sigaction act_int;
 /**
- * @brief
+ * @brief dfg
  */
 pid_t pid;
 /**
@@ -54,9 +54,9 @@ pid_t pid;
  */
 pid_t metric_pid = -1;
 /**
- * @brief
+ * @brief Variable global para almacenar el PID del proceso de monitoreo
  */
-pid_t monitor_pid = -1; // Variable global para almacenar el PID del proceso de monitoreo
+pid_t monitor_pid = -1;
 /**
  * @brief Valo
  */
