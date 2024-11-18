@@ -68,7 +68,7 @@ typedef struct
  * @brief Inicia el monitor en segundo plano y devuelve el PID del proceso monitor.
  * @return pid_t El PID del proceso monitor, o -1 en caso de error.
  */
-pid_t start_monitor();
+pid_t start_monitor(void);
 
 /**
  * @brief Verifica si un proceso con el PID dado está activo.
@@ -108,12 +108,12 @@ void reset_terminal_mode(void);
 /**
  * @brief Detecta y maneja la pulsación de teclas en la terminal.
  */
-void handle_keypress();
+void handle_keypress(void);
 
 /**
  * @brief Configura la terminal en modo no canónico para capturar las teclas inmediatamente.
  */
-void set_noncanonical_mode();
+void set_noncanonical_mode(void);
 
 /**
  * @brief Manejador de señales para eventos de temporizador.
@@ -151,5 +151,11 @@ void timeout_handler(int sig);
  *         La memoria para la cadena debe liberarse después de su uso.
  */
 char* read_json_file(const char* filename);
-
+/**
+ * @brief
+ *
+ * @param args
+ * @return int
+ */
+int commandHandler(char *args[]);
 #endif // TOOL_H

@@ -9,7 +9,7 @@
  * Created by DARIO on 27/10/24.
  */
 #include "tools.h"
-#include "util.h"
+#include "main.h"
 /**
  * @brief Defi
  */
@@ -129,7 +129,7 @@ pid_t start_monitor(void)
 {
     char current_path[MAX_PATH];
     char binary_path[MAX_PATH];
-
+    binary_path[0] = '\0';
     // Obtener el directorio actual
     if (getcwd(current_path, sizeof(current_path)) == NULL)
     {
@@ -137,8 +137,9 @@ pid_t start_monitor(void)
         return -1;
     }
     // Construir la ruta completa al binario
-    snprintf(binary_path, sizeof(binary_path), "%s/%s", current_path, METRIC_RELATIVE_PATH);
-
+strncat(binary_path, current_path, sizeof(binary_path) - strlen(binary_path) - 1);
+strncat(binary_path, "/", sizeof(binary_path) - strlen(binary_path) - 1);
+strncat(binary_path, METRIC_RELATIVE_PATH, sizeof(binary_path) - strlen(binary_path) - 1);
     // Verificar si el archivo existe y es ejecutable
     if (access(binary_path, X_OK) == -1)
     {
@@ -250,7 +251,7 @@ void reset_terminal_mode()
  *   Esta función es fundamental para aplicaciones interactivas en la
  *   terminal, como una shell o un menú de control.
  */
-void handle_keypress()
+void handle_keypress(void)
 {
     char ch;
     while (read(STDIN_FILENO, &ch, 1) == 1)
@@ -302,7 +303,7 @@ void handle_keypress()
  *   que controla el estado de la aplicación.
  */
 void timeout_handler(int sig)
-{
+{(void)sig;
     if (process.pid > 0)
     {
         kill(process.pid, SIGTERM);
@@ -321,7 +322,7 @@ void timeout_handler(int sig)
  *   ya que la señal podría interrumpir el flujo normal del programa.
  */
 void timer_handler(int sig)
-{
+{(void)sig;
     if (process.is_running)
     {
         kill(process.pid, SIGSTOP);

@@ -2,31 +2,37 @@
 aca debo poner las instruccione s de uso de la shell
 
 
-completarr
+compilacion:
+cmake .. -DCMAKE_TOOLCHAIN_FILE=./build/Release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+
+make -j$(nproc)
 
 
-cd : vuelve al directorio home principal
 
-cd <directorio>: Cambia el directorio actual a <directorio>
+#INSTRUCCIONES DE COMANDOS
 
-cd - : retorna al último directorio visitado. me vuelve al diretorio que estaba antes
+##cd : vuelve al directorio home principal
 
-cd..  :
+##cd <directorio>: Cambia el directorio actual a <directorio>
 
-cd /directorionuevo: cambia a un directorio en especificoc
+##cd - : retorna al último directorio visitado. me vuelve al diretorio que estaba antes
 
-pwd: imprime directorio actual
+##cd..  :
 
-clr :limpia la pantalla. comando realizado por mi
+##cd /directorionuevo: cambia a un directorio en especificoc
 
-clear : limpia la pantalla . comando ya definido externo
+##pwd: imprime directorio actual
 
-echo comentario: imprime un comentario
+##clr :limpia la pantalla. comando realizado por mi
 
-echo $VARIABLEDEENTORNO: imprime una variable de entorno
+##clear : limpia la pantalla . comando ya definido externo
 
-start_monitor: inicializa las metricas
+##echo comentario: imprime un comentario
 
-status_monitor: muestra las metricas por consola
+##echo $VARIABLEDEENTORNO: imprime una variable de entorno
 
-stop_monitor: detiene el proceso de metricas
+##start_monitor: inicializa las metricas
+
+##status_monitor: muestra las metricas por consola
+
+#stop_monitor: detiene el proceso de metricas

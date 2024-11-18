@@ -7,7 +7,7 @@
  * @author dario castillo
  */
 #include "tools.h"
-#include "util.h"
+#include "main.h"
 #include <cjson/cJSON.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -21,6 +21,13 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#include <ctype.h>
+
+pid_t GBSH_PID;             /**< PID del proceso de la shell. */
+pid_t GBSH_PGID;            /**< PGID de la shell para gestionar el grupo de procesos. */
+int GBSH_IS_INTERACTIVE;    /**< Indica si la shell está en modo interactivo. */
+struct termios GBSH_TMODES; /**< Estructura para almacenar los modos de terminal actuales. */
+
 /**
  * @brief max number of tokens for a command
  */
@@ -75,7 +82,7 @@ int no_reprint_prmpt;
  *   predeterminadas para asegurar que el programa arranque en un
  *   estado controlado.
  */
-void init()
+void init(void)
 {
     GBSH_PID = getpid();
     GBSH_IS_INTERACTIVE = isatty(STDIN_FILENO);
@@ -124,7 +131,7 @@ void init()
  * @brief welcomeScreen
  * Muestra una pantalla de bienvenida o introducción al usuario.
  */
-void welcomeScreen()
+void welcomeScreen(void)
 {
     struct utsname uts;
     time_t now;
@@ -165,7 +172,7 @@ void welcomeScreen()
  *   necesitan monitorear su estado sin bloquear el programa principal.
  */
 void signalHandler_child(int p)
-{
+{ (void)p;  // Suppress unused parameter warning
     /* Wait for all dead processes.
      * We use a non-blocking call (WNOHANG) to be sure this signal handler will not
      * block if a child was cleaned up in another part of the program. */
@@ -190,7 +197,7 @@ void signalHandler_child(int p)
  *   una señal de interrupción del usuario.
  */
 void signalHandler_int(int p)
-{
+{ (void)p;  // Suppress unused parameter warning
     // We send a SIGTERM signal to the child process
     if (kill(pid, SIGTERM) == 0)
     {
@@ -209,7 +216,7 @@ void signalHandler_int(int p)
  *  Muestra el nombre del directorio actual donde está la shell,
  *  esperando la entrada del usuario para el próximo comando.
  */
-void shellPrompt()
+void shellPrompt(void)
 {
     char hostname[1024];
     char cwd[1024];
@@ -926,12 +933,12 @@ int commandHandler(char* args[])
  */
 int main(int argc, char* argv[], char** envp)
 {
-    cJSON* root = cJSON_CreateObject();
+    //cJSON* root = cJSON_CreateObject();
     char line[MAXLINE];  // buffer for the user input
     char* tokens[LIMIT]; // array for the different tokens in the command
     int numTokens;
     struct termios termios, original_mode;
-    int no_reprint_prmpt = 0; // to prevent the printing of the shell after certain methods
+    //int no_reprint_prmpt = 0;
     pid = -10;                // we initialize pid to an pid that is not possible
 
     // Obtener la configuración original de la terminal
