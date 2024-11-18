@@ -21,10 +21,21 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-
+/**
+ * @brief Defi
+ */
 #define LIMIT 256        // max number of tokens for a command
+/**
+ * @brief Defi
+ */
 #define MAXLINE 1024     // Limite de caracteres para el usuario
+/**
+ * @brief Defi
+ */
 #define MIN_PS_ID 30000  // Valor minimo posible de proceso a controlar
+/**
+ * @brief Defi
+ */
 #define MAX_PS_ID 100000 // Valor maximo posible de proceso a controlar
 
 struct sigaction act_child;
@@ -39,11 +50,8 @@ int no_reprint_prmpt;
 /**
  * @brief init
  * Funcion de inicializacion de shell recomendada por GNU
- * @link http://www.gnu.org/software/libc/manual/html_node/Initializing-the-Shell.html
- *
  * Inicializa las variables, configuraciones y estructuras necesarias
  *  para el funcionamiento del programa.
- *
  * Funcionalidad:
  *   Configura elementos iniciales como variables globales, estructuras
  *   de datos y recursos que el programa utilizará.
@@ -153,7 +161,7 @@ void signalHandler_child(int p)
 }
 
 /**
- * @signalHandler_int
+ * @brief signalHandler_int
  * Signal handler for SIGINT
  *  Maneja la señal de interrupción (SIGINT) generada, al presionar Ctrl+C.
  *
