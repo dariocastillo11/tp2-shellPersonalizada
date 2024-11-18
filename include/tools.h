@@ -157,5 +157,5 @@ char* read_json_file(const char* filename);
  * @param args
  * @return int
  */
-int commandHandler(char *args[]);
+int commandHandler(char* args[]);
 #endif // TOOL_H

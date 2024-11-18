@@ -6,9 +6,10 @@
  * con herramentas y utildades
  * @author dario castillo
  */
-#include "tools.h"
 #include "main.h"
+#include "tools.h"
 #include <cjson/cJSON.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -21,7 +22,6 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-#include <ctype.h>
 
 pid_t GBSH_PID;             /**< PID del proceso de la shell. */
 pid_t GBSH_PGID;            /**< PGID de la shell para gestionar el grupo de procesos. */
@@ -172,7 +172,8 @@ void welcomeScreen(void)
  *   necesitan monitorear su estado sin bloquear el programa principal.
  */
 void signalHandler_child(int p)
-{ (void)p;  // Suppress unused parameter warning
+{
+    (void)p; // Suppress unused parameter warning
     /* Wait for all dead processes.
      * We use a non-blocking call (WNOHANG) to be sure this signal handler will not
      * block if a child was cleaned up in another part of the program. */
@@ -197,7 +198,8 @@ void signalHandler_child(int p)
  *   una señal de interrupción del usuario.
  */
 void signalHandler_int(int p)
-{ (void)p;  // Suppress unused parameter warning
+{
+    (void)p; // Suppress unused parameter warning
     // We send a SIGTERM signal to the child process
     if (kill(pid, SIGTERM) == 0)
     {
@@ -933,13 +935,13 @@ int commandHandler(char* args[])
  */
 int main(int argc, char* argv[], char** envp)
 {
-    //cJSON* root = cJSON_CreateObject();
+    // cJSON* root = cJSON_CreateObject();
     char line[MAXLINE];  // buffer for the user input
     char* tokens[LIMIT]; // array for the different tokens in the command
     int numTokens;
     struct termios termios, original_mode;
-    //int no_reprint_prmpt = 0;
-    pid = -10;                // we initialize pid to an pid that is not possible
+    // int no_reprint_prmpt = 0;
+    pid = -10; // we initialize pid to an pid that is not possible
 
     // Obtener la configuración original de la terminal
     tcgetattr(STDIN_FILENO, &original_mode);

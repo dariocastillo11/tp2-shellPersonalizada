@@ -137,9 +137,9 @@ pid_t start_monitor(void)
         return -1;
     }
     // Construir la ruta completa al binario
-strncat(binary_path, current_path, sizeof(binary_path) - strlen(binary_path) - 1);
-strncat(binary_path, "/", sizeof(binary_path) - strlen(binary_path) - 1);
-strncat(binary_path, METRIC_RELATIVE_PATH, sizeof(binary_path) - strlen(binary_path) - 1);
+    strncat(binary_path, current_path, sizeof(binary_path) - strlen(binary_path) - 1);
+    strncat(binary_path, "/", sizeof(binary_path) - strlen(binary_path) - 1);
+    strncat(binary_path, METRIC_RELATIVE_PATH, sizeof(binary_path) - strlen(binary_path) - 1);
     // Verificar si el archivo existe y es ejecutable
     if (access(binary_path, X_OK) == -1)
     {
@@ -303,7 +303,8 @@ void handle_keypress(void)
  *   que controla el estado de la aplicación.
  */
 void timeout_handler(int sig)
-{(void)sig;
+{
+    (void)sig;
     if (process.pid > 0)
     {
         kill(process.pid, SIGTERM);
@@ -322,7 +323,8 @@ void timeout_handler(int sig)
  *   ya que la señal podría interrumpir el flujo normal del programa.
  */
 void timer_handler(int sig)
-{(void)sig;
+{
+    (void)sig;
     if (process.is_running)
     {
         kill(process.pid, SIGSTOP);
