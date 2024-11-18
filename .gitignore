@@ -17,7 +17,7 @@
 *.pch
 
 # Libraries
-
+*.lib
 *.a
 *.la
 *.lo
@@ -62,3 +62,5 @@ CMakeUserPresets.json
 
 # .vscode
 .vscode/
+lib/
+lib/tp1-s.op
