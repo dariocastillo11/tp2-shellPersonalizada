@@ -24,15 +24,15 @@
 /**
  * @brief Defi
  */
-#define LIMIT 256        // max number of tokens for a command
+#define LIMIT 256 // max number of tokens for a command
 /**
  * @brief Defi
  */
-#define MAXLINE 1024     // Limite de caracteres para el usuario
+#define MAXLINE 1024 // Limite de caracteres para el usuario
 /**
  * @brief Defi
  */
-#define MIN_PS_ID 30000  // Valor minimo posible de proceso a controlar
+#define MIN_PS_ID 30000 // Valor minimo posible de proceso a controlar
 /**
  * @brief Defi
  */
