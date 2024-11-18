@@ -19,7 +19,7 @@ set(CMAKE_C_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -Wpedantic -Werror -Wunused-param
 include_directories(include)
 
 #Find dependences
-find_package(cJSON REQUIRED)
+#find_package(cJSON REQUIRED)
 find_package(unity REQUIRED)
 
 
