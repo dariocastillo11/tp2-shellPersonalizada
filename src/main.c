@@ -745,7 +745,7 @@ int commandHandler(char* args[])
 else if (strcmp(args[0], "status_monitor") == 0)
 {
     // Ejecutar 'curl' desde la shell para obtener las métricas
-    int result = system("curl -s http://localhost:9090/metrics"); // Utiliza 'curl' para obtener las métricas
+    int result = system("curl -s http://localhost:8080/metrics"); // Utiliza 'curl' para obtener las métricas
 
     if (result == -1)
     {
