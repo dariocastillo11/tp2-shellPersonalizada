@@ -6,17 +6,18 @@
  * con herramentas y utildades
  * @author dario castillo
  */
+#include <sys/types.h>
+
 #include "main.h"
 #include "tools.h"
 #include <cjson/cJSON.h>
 #include <ctype.h>
 #include <errno.h>
-#include <fcntl.h>
+#include <fcntl.h>ss
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <termios.h>
@@ -199,18 +200,19 @@ void signalHandler_child(int p)
  */
 void signalHandler_int(int p)
 {
-    (void)p; // Suppress unused parameter warning
-    // We send a SIGTERM signal to the child process
-    if (kill(pid, SIGTERM) == 0)
+    (void)p; // Suprimir advertencias
+    if (monitor_pid > 0)
     {
-        printf("\nEl proceso %d recibio una señal de interrupcion SIGINT\n", pid);
-        no_reprint_prmpt = 1;
+        // Enviar SIGTERM solo al proceso de monitoreo
+        if (kill(monitor_pid, SIGTERM) == 0)
+        {
+            printf("\nProceso de monitoreo con PID %d detenido por SIGINT\n", monitor_pid);
+            monitor_pid = -1;
+        }
     }
-    else
-    {
-        printf("\n");
-    }
+    no_reprint_prmpt = 1; // Esto debe ser manejado en el loop principal
 }
+
 
 /** @brief shellPrompt
  * punto 1 del tp2
@@ -746,34 +748,35 @@ int commandHandler(char* args[])
 
     // 'start_monitor' command que inicia el monitor de sistema
     else if (strcmp(args[0], "start_monitor") == 0)
+{
+    pid_t pid = fork(); // Crear un proceso hijo
+
+    if (pid == -1)
     {
-        pid_t pid = fork(); // Crear un proceso hijo
-
-        if (pid == -1)
-        {
-            // Error al crear el proceso
-            printf("Error al iniciar el proceso de monitoreo.\n");
-            return 1;
-        }
-
-        if (pid == 0)
-        {
-            // En el proceso hijo: Ejecutar el ejecutable 'monitoreo'
-            char* exec_args[] = {"./monitoreo",
-                                 NULL};      // Usar ruta relativa si el ejecutable está en el mismo directorio
-            execvp(exec_args[0], exec_args); // Reemplazar el proceso actual por 'monitoreo'
-
-            // Si execvp falla
-            perror("Error al ejecutar monitoreo");
-            exit(1);
-        }
-        else
-        {
-            // En el proceso padre: Guardar el PID del proceso de monitoreo
-            monitor_pid = pid;
-            printf("Monitor iniciado con PID: %d\n", pid);
-        }
+        printf("Error al iniciar el proceso de monitoreo.\n");
+        return 1;
     }
+
+    if (pid == 0)
+    {
+        // Proceso hijo: crear un nuevo grupo de procesos
+        setpgid(0, 0);
+
+        // Ejecutar el monitor (reemplazar el proceso actual)
+        char* exec_args[] = {"./monitoreo", NULL};
+        execvp(exec_args[0], exec_args);
+
+        perror("Error al ejecutar monitoreo");
+        exit(1);
+    }
+    else
+    {
+        // Proceso padre: guardar el PID del proceso hijo
+        monitor_pid = pid;
+        printf("Monitor iniciado con PID: %d\n", pid);
+    }
+}
+
 
     // Comando 'status_monitor' que obtiene y muestra las métricas del monitor
     else if (strcmp(args[0], "status_monitor") == 0)
@@ -787,27 +790,28 @@ int commandHandler(char* args[])
         }
     }
 
-    else if (strcmp(args[0], "stop_monitor") == 0)
+   else if (strcmp(args[0], "stop_monitor") == 0)
+{
+    if (monitor_pid == -1)
     {
-        if (monitor_pid == -1)
+        printf("No se ha iniciado el proceso de monitoreo.\n");
+    }
+    else
+    {
+        // Enviar señal SIGTERM al proceso monitor
+        if (kill(monitor_pid, SIGTERM) == 0)
         {
-            // No se ha iniciado el monitor
-            printf("No se ha iniciado el proceso de monitoreo.\n");
+            printf("Proceso de monitoreo detenido correctamente.\n");
+            monitor_pid = -1; // Resetea el PID después de detener el proceso
         }
         else
         {
-            // Enviar señal SIGTERM para terminar el proceso de monitoreo
-            if (kill(monitor_pid, SIGTERM) == 0)
-            {
-                printf("Proceso de monitoreo detenido correctamente.\n");
-                monitor_pid = -1; // Resetear el PID después de detener el proceso
-            }
-            else
-            {
-                perror("Error al intentar detener el proceso de monitoreo");
-            }
+            perror("Error al intentar detener el proceso de monitoreo");
         }
     }
+}
+
+
 
     else if (strcmp(args[0], "config_process") == 0)
     {
@@ -935,97 +939,95 @@ int commandHandler(char* args[])
  */
 int main(int argc, char* argv[], char** envp)
 {
-    // cJSON* root = cJSON_CreateObject();
-    char line[MAXLINE];  // buffer for the user input
-    char* tokens[LIMIT]; // array for the different tokens in the command
+    char line[MAXLINE];  // Buffer para la entrada del usuario
+    char* tokens[LIMIT]; // Array para almacenar los tokens del comando
     int numTokens;
     struct termios termios, original_mode;
-    // int no_reprint_prmpt = 0;
-    pid = -10; // we initialize pid to an pid that is not possible
+    pid = -10; // Inicializa el PID con un valor inválido
 
-    // Obtener la configuración original de la terminal
+    // Guardar configuración original de la terminal
     tcgetattr(STDIN_FILENO, &original_mode);
 
-    // Habilitar el modo de línea de comandos y el procesamiento de secuencias de escape
+    // Configurar terminal en modo interactivo
     termios = original_mode;
-    termios.c_lflag |= ICANON;
-    termios.c_lflag |= ISIG;
+    termios.c_lflag |= ICANON; // Habilitar entrada canónica
+    termios.c_lflag |= ISIG;   // Habilitar señales
 
     // Configurar el manejador de señales
     signal(SIGINT, signalHandler_int);
 
-    // Inicialización y la pantalla de bienvenida
+    // Inicialización y pantalla de bienvenida
     init();
     welcomeScreen();
-    // Asigno las variables de entorno
-    environ = envp;
-    // Asigno al directorio actual la shell
-    setenv("shell", getcwd(currentDirectory, 1024), 1);
 
-    // Abre el archivo si se pasa como argumento. parte 4 tp2
+    // Asigna las variables de entorno
+    environ = envp;
+    setenv("shell", getcwd(currentDirectory, 1024), 1); // Asigna el directorio actual como variable "shell"
+
+    // Abre un archivo si se pasa como argumento
     FILE* fp = NULL;
     if (argc > 1)
     {
         fp = fopen(argv[1], "r");
         if (fp == NULL)
         {
-            perror("Error abriendo el archivo");
+            perror("Error al abrir el archivo");
             return EXIT_FAILURE;
         }
     }
 
-    // Main loop, donde se leerá la entrada del usuario y se imprimirá el prompt
+    // Bucle principal: leer entrada y procesar comandos
     while (TRUE)
     {
-        memset(line, '\0', MAXLINE);
+        memset(line, '\0', MAXLINE); // Limpia el buffer de entrada
 
-        // Imprimir el prompt si no hay necesidad de reimpresión
+        shellPrompt(); // Muestra el prompt de la shell
 
-        shellPrompt();
-
-        // Vaciado de la línea y captura del ingreso del usuario
-        // Lee desde el archivo si está abierto, o desde stdin si no
+        // Leer la entrada desde archivo o stdin
         if (fp)
         {
             if (fgets(line, MAXLINE, fp) == NULL)
             {
-                break; // Si no hay más líneas, salir del bucle
+                // Si se alcanza el final del archivo, cerrar el archivo y salir del bucle
+                fclose(fp);
+                fp = NULL;
+                continue;
             }
         }
         else
         {
             if (fgets(line, MAXLINE, stdin) == NULL)
             {
-                break; // Salir si hay un error en stdin
+
+                continue;
             }
         }
 
-        // Si la línea está vacía, continúa el bucle
+        // Ignorar líneas vacías
         if ((tokens[0] = strtok(line, " \n\t")) == NULL)
         {
             continue;
         }
 
-        // Recorrer los comandos y dividirlos en tokens
+        // Tokenizar la entrada
         numTokens = 1;
         while ((tokens[numTokens] = strtok(NULL, " \n\t")) != NULL)
         {
             numTokens++;
         }
 
-        // Llamada al manejador de comandos
-        commandHandler(tokens);
+        // Manejar el comando; si `commandHandler` retorna 0, salir del bucle
+        if (commandHandler(tokens) == 0)
+        {
+            break;
+        }
     }
 
-    // Cierre del archivo si fue abierto. parte 4 tp2
-    if (fp)
-    {
-        fclose(fp);
-    }
+    // Restaurar configuración original de la terminal antes de salir
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_mode);
 
-    // Restaurar modo original cuando la terminal cierre
-    reset_terminal_mode();
+    // Mensaje de despedida antes de salir
+    printf("\nCerrando shell de Dario Castillo...\n");
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &termios);
-    exit(0);
+    return 0;
 }

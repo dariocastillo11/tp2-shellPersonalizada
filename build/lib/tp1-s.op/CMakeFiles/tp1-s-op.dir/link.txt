@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtp1-s-op.a CMakeFiles/tp1-s-op.dir/src/main.c.o CMakeFiles/tp1-s-op.dir/src/expose_metrics.c.o CMakeFiles/tp1-s-op.dir/src/metrics.c.o
+/usr/bin/ranlib libtp1-s-op.a

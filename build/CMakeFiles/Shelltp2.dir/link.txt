@@ -1,0 +1,1 @@
+/usr/bin/cc -m64 -O3 -DNDEBUG -m64 CMakeFiles/Shelltp2.dir/src/main.c.o CMakeFiles/Shelltp2.dir/src/tools.c.o -o Shelltp2  -lcjson lib/unity/libunity.a

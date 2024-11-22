@@ -1,6 +1,6 @@
-# Verfy cmake version
 cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
-#create project
+
+# Crear proyecto
 project(
     "ShellProject"
     VERSION 1.0.0
@@ -8,41 +8,33 @@ project(
     LANGUAGES C
 )
 
-#Enable testing
+# Incluir configuraciones de Conan
+
+include(${CMAKE_BINARY_DIR}/Release/generators/conan_toolchain.cmake)
+
+
+# Habilitar testing
 include(CTest)
 
-# Flags for compilng
+# Flags para compilación
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -Wpedantic -Werror -Wunused-parameter -Wmissing-prototypes -Wstrict-prototypes -fhardened")
 
-# include h-eaders
+# Incluir headers
 include_directories(include)
 
-#Find dependences
-#find_package(cJSON REQUIRED)
-#find_package(unity REQUIRED)
-
-
-# Incluir el submódulo tp1-s.op
+# Añadir subdirectorios
 add_subdirectory(lib/tp1-s.op)
-# Agregar Unity como subdirectorio
 add_subdirectory(lib/unity)
 
+# Crear ejecutable y enlazar bibliotecas
+add_executable(Shelltp2 src/main.c src/tools.c)
+target_link_libraries(Shelltp2 PRIVATE cjson unity)
 
-add_executable(Shelltp2 src/main.c src/tools.c )
-
-target_link_libraries(Shelltp2 PRIVATE cjson::cjson unity::unity)
-
-# Crear un ejecutable para el submódulo
+# Crear ejecutable para monitoreo
 add_executable(monitoreo
-    lib/tp1-s.op/src/main.c  # El archivo main.c del submódulo
+    lib/tp1-s.op/src/main.c
     lib/tp1-s.op/src/expose_metrics.c
-    lib/tp1-s.op/src/metrics.c)
-# Enlazar bibliotecas para el submódulo
+    lib/tp1-s.op/src/metrics.c
+)
 target_link_libraries(monitoreo PRIVATE tp1-s-op)
-
-
-if(RUN_COVERAGE EQUAL 1)
-    message("Run with coverage")
-    #add_subdirectory(test)
-endif()

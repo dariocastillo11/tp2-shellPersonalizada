@@ -1,0 +1,10 @@
+digraph "reset_terminal_mode"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="reset_terminal_mode",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="reset_terminal_mode Restaura la configuración original de la terminal. Funcionalidad: Revierte cualqu..."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="set_noncanonical_mode",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$tools_8h.html#a2fa5b5231a863a88327794a718221797",tooltip="Configura la terminal en modo no canónico para capturar las teclas inmediatamente."];
+}

@@ -54,14 +54,9 @@ dkms.conf
 # env
 venv/
 
-# build
-build/
 
 # cmakeuserpresen
 CMakeUserPresets.json
 
 # .vscode
 .vscode/
-lib/
-lib/tp1-s.op
-documentation/

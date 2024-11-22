@@ -2,14 +2,15 @@
 aca debo poner las instruccione s de uso de la shell
 
 
-compilacion:
+# compilacion:
+
 cmake .. -DCMAKE_TOOLCHAIN_FILE=./build/Release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 
 make -j$(nproc)
 
 
 
-#INSTRUCCIONES DE COMANDOS
+# INSTRUCCIONES DE COMANDOS
 
 ## cd :
     vuelve al directorio home principal
@@ -48,3 +49,9 @@ make -j$(nproc)
 
 ## stop_monitor:
     detiene el proceso de metricas
+
+## quit :
+    sale de la consola
+
+## exit:
+    sale de la consola

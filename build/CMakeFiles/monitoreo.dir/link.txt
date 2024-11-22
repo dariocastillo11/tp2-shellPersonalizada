@@ -1,0 +1,1 @@
+/usr/bin/cc -m64 -O3 -DNDEBUG -m64 CMakeFiles/monitoreo.dir/lib/tp1-s.op/src/main.c.o CMakeFiles/monitoreo.dir/lib/tp1-s.op/src/expose_metrics.c.o CMakeFiles/monitoreo.dir/lib/tp1-s.op/src/metrics.c.o -o monitoreo  lib/tp1-s.op/libtp1-s-op.a -lpthread -lprom -lpromhttp -lmicrohttpd
